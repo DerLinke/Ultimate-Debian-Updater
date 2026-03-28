@@ -18,6 +18,12 @@ Ein umfassendes All-in-one Update-Skript für Debian-basierte Linux-Systeme.
 ## 🖥 Moderne TUI
 Grafische Menüs via `whiptail` und eine farbenfrohe Terminal-Ausgabe mit modernen Icons für eine klare Struktur.
 
+## 📦 Voraussetzungen (Dependencies)
+Das Skript prüft beim Start automatisch auf fehlende Pakete. Für eine manuelle Vorinstallation (Debian/Ubuntu):
+```bash
+sudo apt update && sudo apt install -y ncurses-bin whiptail libnotify-bin fwupd pciutils curl
+```
+
 ## 🛠 Installation
 1. Klonen Sie das Repository:
    ```bash
