@@ -1,56 +1,37 @@
-# 🚀 Ultimate Debian Updater (v2.2)
+# 🚀 Ultimate Debian Updater (v2.3)
 
-Ein umfassendes All-in-One Update-Skript für Debian-basierte Linux-Systeme (Debian, Linux Mint, Ubuntu, etc.).
+Ein umfassendes All-in-one Update-Skript für Debian-basierte Linux-Systeme.
 
-Dieses Skript automatisiert den Update-Prozess für eine Vielzahl von Paketmanagern und Diensten, die oft manuell nacheinander aktualisiert werden müssen.
+## ✨ Features (v2.3)
 
-## ✨ Features (v2.2)
-
-Das Skript erkennt automatisch Ihre Desktop-Umgebung und führt die entsprechenden Updates aus:
-
-- **APT**: Volles System-Upgrade (`full-upgrade`), `autoremove` und `autoclean`.
-- **Firmware (fwupd)**: Prüft auf Hardware- und BIOS-Updates.
-- **Extrepo**: Aktualisierung der externen Repository-Metadaten.
-- **Flatpak**: Aktualisiert alle Apps und entfernt ungenutzte Runtimes.
-- **Snap**: Führt `snap refresh` aus.
-- **NPM**: Aktualisiert alle global installierten Pakete.
+- **Smart Hardware Diagnosis**: Erkennt NVIDIA/AMD GPUs und gibt Tipps zur optimalen Treiber-Konfiguration.
+- **Backports-Check**: Prüft, ob Debian Backports aktiviert sind (wichtig für aktuelle Grafik-Firmware).
+- **APT System Update**: Volles Upgrade (`full-upgrade`) inklusive automatischer Reinigung (`autoremove`, `autoclean`).
+- **Firmware (fwupd)**: Integrierter Hardware- und BIOS-Check für moderne Systeme.
+- **Flatpak & Snap**: Hält alle installierten Container-Apps und Snaps aktuell.
 - **Desktop-Support**: 
-  - **Cinnamon**: Aktualisiert Applets, Desklets und Extensions.
-  - **XFCE**: Optimierte Systempflege.
-- **GE-Proton**: Prüft und installiert die neueste Proton-GE Version für Steam (via `protonup`).
-- **System-Hygiene**: Automatische Reinigung von System-Logs (Journal) und Cache-Dateien.
+  - **Cinnamon**: Aktualisiert Applets, Desklets und Extensions via Spice-Updater.
+  - **GNOME & XFCE**: Visuelle Bestätigung und Pflege der Systemkomponenten.
+- **Gaming (GE-Proton)**: Automatisiertes Update für Steam Compatibility Tools via `protonup`.
+- **System-Hygiene**: Bereinigt alte Journal-Logs (älter als 3 Tage) und Thumbnail-Caches zur Speicherplatz-Optimierung.
 
-## 🖥 Moderne TUI (Terminal User Interface)
-
-- **Grafische Menüs**: Auswahl von Aktionen (Reboot/Shutdown/Exit) via `whiptail`.
-- **Farbige Icons**: Klare Strukturierung durch moderne Icons und farbliche Hervorhebung.
-- **Dependency-Check**: Automatisierte Prüfung und Installation fehlender Hilfsprogramme beim Start.
+## 🖥 Moderne TUI
+Grafische Menüs via `whiptail` und eine farbenfrohe Terminal-Ausgabe mit modernen Icons für eine klare Struktur.
 
 ## 🛠 Installation
-
 1. Klonen Sie das Repository:
    ```bash
    git clone https://github.com/DerLinke/Ultimate-Debian-Updater.git
    cd Ultimate-Debian-Updater
    ```
-
 2. Machen Sie das Skript ausführbar:
    ```bash
    chmod +x update.sh
    ```
-
-## 🚀 Nutzung
-
-Starten Sie das Skript einfach im Terminal:
-```bash
-./update.sh
-```
-
-## 👤 Autor
-
-**DerLinke**
-- GitHub: [https://github.com/DerLinke](https://github.com/DerLinke)
+3. Starten Sie das Skript:
+   ```bash
+   ./update.sh
+   ```
 
 ## 📄 Lizenz
-
-Dieses Projekt steht unter der MIT-Lizenz.
+Dieses Projekt steht unter der MIT-Lizenz - Copyright (c) 2026 DerLinke

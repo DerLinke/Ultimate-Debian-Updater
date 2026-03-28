@@ -69,13 +69,13 @@ fi
 # AMD Check
 if echo "$GPU_INFO" | grep -iqE "amd|ati"; then
     echo -e "${GREEN}✓ AMD-GPU erkannt (Mesa/amdgpu).${NC}"
-    echo -e "   Tipp: Stelle sicher, dass 'firmware-amd-graphics' installiert ist."
+    echo -e "   Tipp: Stelle sicher, dass 'firmware-amd-graphics' (ggf. aus Backports) installiert ist."
 fi
 
 # Backports Check
 if [ -z "$BACKPORTS_ACTIVE" ]; then
     echo -e "${YELLOW}ℹ️  Debian Backports sind nicht aktiviert.${NC}"
-    echo -e "   Empfohlen für neuere Grafik-Firmware (AMD/NVIDIA)."
+    echo -e "   Empfohlen für neuere Grafik-Firmware und Kernel-Komponenten."
 fi
 
 # --- ROOT-RECHTE ---
@@ -115,7 +115,30 @@ if check_cmd flatpak; then
     else FAILED+=("Flatpak"); fi
 fi
 
-# 4. Gaming
+# 4. Snap
+if check_cmd snap; then
+    echo -e "\n\n${BOLD}${PURPLE}📂 [SNAP]${NC} ${CYAN}Aktualisiere Snaps...${NC}"
+    if sudo snap refresh; then UPDATED+=("Snap"); else FAILED+=("Snap"); fi
+fi
+
+# 5. Desktop-Spezifisches
+CURRENT_DE=$(echo $XDG_CURRENT_DESKTOP | tr '[:upper:]' '[:lower:]')
+case "$CURRENT_DE" in
+    *cinnamon*)
+        if check_cmd cinnamon-spice-updater; then
+            echo -e "\n\n${BOLD}${PURPLE}📂 [CINNAMON]${NC} ${CYAN}Aktualisiere Applets & Extensions...${NC}"
+            if cinnamon-spice-updater --update-all; then UPDATED+=("Cinnamon Spices"); fi
+        fi
+        ;;
+    *gnome*)
+        echo -e "\n\n${BOLD}${PURPLE}📂 [GNOME]${NC} ${CYAN}System-Komponenten werden via APT/Flatpak gepflegt.${NC}"
+        ;;
+    *xfce*)
+        echo -e "\n\n${BOLD}${PURPLE}📂 [XFCE]${NC} ${CYAN}Umgebung wird via APT gepflegt.${NC}"
+        ;;
+esac
+
+# 6. Gaming
 if check_cmd protonup; then
     if [ -d "$STEAM_GE_PATH" ]; then
         echo -e "\n\n${BOLD}${PURPLE}📂 [GAMING]${NC} ${CYAN}GE-Proton Updates...${NC}"
@@ -123,7 +146,7 @@ if check_cmd protonup; then
     fi
 fi
 
-# 5. System-Hygiene
+# 7. System-Hygiene
 echo -e "\n\n${BOLD}${PURPLE}🧹 [REINIGUNG]${NC} ${CYAN}Logs und Cache...${NC}"
 sudo journalctl --vacuum-time=3d >/dev/null 2>&1
 rm -rf ~/.cache/thumbnails/*
