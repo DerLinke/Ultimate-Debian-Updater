@@ -1,6 +1,6 @@
 #!/bin/bash
 # ==============================================================================
-# 🚀 Ultimate Debian Updater v2.2
+# 🚀 Ultimate Debian Updater v2.2.1
 # ------------------------------------------------------------------------------
 # Ein all-in-one Update-Skript für Debian-basierte Systeme.
 # Unterstützt: APT, Flatpak, Snap, NPM, Desktop-Spices (Cinnamon/XFCE/GNOME).
@@ -19,11 +19,23 @@ export PATH="$HOME/.local/bin:$PATH"
 
 check_cmd() { command -v "$1" >/dev/null 2>&1; }
 
-# --- FARBEN & STILE ---
-RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'
-PURPLE='\033[0;35m'; CYAN='\033[0;36m'; NC='\033[0m'
-BOLD='\033[1m'
-UNDERLINE='\033[4m'
+# --- FARBEN & STILE (mit tput für maximale Kompatibilität) ---
+if check_cmd tput && [ -t 1 ]; then
+    ncolors=$(tput colors)
+    if [ -n "$ncolors" ] && [ "$ncolors" -ge 8 ]; then
+        BOLD=$(tput bold)
+        NC=$(tput sgr0)
+        RED=$(tput setaf 1)
+        GREEN=$(tput setaf 2)
+        YELLOW=$(tput setaf 3)
+        BLUE=$(tput setaf 4)
+        PURPLE=$(tput setaf 5)
+        CYAN=$(tput setaf 6)
+    fi
+fi
+
+# Fallback falls tput nicht geht
+: "${BOLD:=}"; : "${NC:=}"; : "${RED:=}"; : "${GREEN:=}"; : "${YELLOW:=}"; : "${BLUE:=}"; : "${PURPLE:=}"; : "${CYAN:=}"
 
 # --- HEADER ---
 clear
