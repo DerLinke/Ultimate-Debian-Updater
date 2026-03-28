@@ -1,13 +1,16 @@
 #!/bin/bash
 # ==============================================================================
-# 🚀 Ultimate Debian Updater v2.3
+# 🚀 Ultimate Debian Updater v2.4
 # ------------------------------------------------------------------------------
 # Ein all-in-one Update-Skript für Debian-basierte Systeme.
-# Unterstützt: APT, Flatpak, Hardware-Check (NVIDIA/AMD), System-Hygiene.
+# Unterstützt: APT, Flatpak, Hardware-Check, Self-Update.
 #
-# GitHub: https://github.com/DerLinke
+# GitHub: https://github.com/DerLinke/Ultimate-Debian-Updater
 # Copyright (c) 2026 DerLinke
 # ==============================================================================
+
+VERSION="2.4"
+RAW_URL="https://raw.githubusercontent.com/DerLinke/Ultimate-Debian-Updater/main/update.sh"
 
 # --- KONFIGURATION ---
 STEAM_GE_PATH="$HOME/.local/share/Steam/compatibilitytools.d/"
@@ -20,8 +23,8 @@ export PATH="$HOME/.local/bin:$PATH"
 check_cmd() { command -v "$1" >/dev/null 2>&1; }
 
 # --- FARBEN & STILE (tput für maximale Kompatibilität) ---
-if check_cmd tput && [ -t 1 ]; then
-    ncolors=$(tput colors)
+if check_cmd tput; then
+    ncolors=$(tput colors 2>/dev/null)
     if [ -n "$ncolors" ] && [ "$ncolors" -ge 8 ]; then
         BOLD=$(tput bold); NC=$(tput sgr0); RED=$(tput setaf 1); GREEN=$(tput setaf 2)
         YELLOW=$(tput setaf 3); BLUE=$(tput setaf 4); PURPLE=$(tput setaf 5); CYAN=$(tput setaf 6)
@@ -32,15 +35,35 @@ fi
 # --- HEADER ---
 clear
 echo -e "${BLUE}====================================================${NC}"
-echo -e "${BOLD}${CYAN}          🚀 Ultimate Debian Updater v2.3 🚀          ${NC}"
+echo -e "${BOLD}${CYAN}          🚀 Ultimate Debian Updater v$VERSION 🚀          ${NC}"
 echo -e "${YELLOW}           Created by DerLinke (GitHub)           ${NC}"
 echo -e "${BLUE}====================================================${NC}"
+
+# --- SELF-UPDATE CHECK ---
+if check_cmd curl; then
+    REMOTE_VERSION=$(curl -s --connect-timeout 2 "$RAW_URL" | grep -m1 "^VERSION=" | cut -d'"' -f2)
+    if [ -n "$REMOTE_VERSION" ] && [ "$REMOTE_VERSION" != "$VERSION" ]; then
+        echo -e "\n${BOLD}${YELLOW}✨ EINE NEUE VERSION IST VERFÜGBAR ($REMOTE_VERSION)!${NC}"
+        echo -n "Möchtest du das Skript jetzt automatisch aktualisieren? (j/n): "
+        read -r update_choice
+        if [[ "$update_choice" =~ ^([jJ][aA]|[jJ])$ ]]; then
+            if curl -s "$RAW_URL" -o "$0"; then
+                echo -e "${GREEN}✓ Skript wurde aktualisiert. Bitte starte es neu.${NC}"
+                exit 0
+            else
+                echo -e "${RED}Fehler beim Herunterladen des Updates.${NC}"
+            fi
+        fi
+    fi
+fi
 
 # --- DEPENDENCY CHECK ---
 MISSING_DEPS=()
 check_cmd whiptail || MISSING_DEPS+=("whiptail")
 check_cmd notify-send || MISSING_DEPS+=("libnotify-bin")
 check_cmd fwupdmgr || MISSING_DEPS+=("fwupd")
+check_cmd lspci || MISSING_DEPS+=("pciutils")
+check_cmd curl || MISSING_DEPS+=("curl")
 
 if [ ${#MISSING_DEPS[@]} -gt 0 ]; then
     echo -e "\n${BOLD}${YELLOW}🔍 PRÜFUNG DER ABHÄNGIGKEITEN${NC}"
@@ -53,29 +76,21 @@ check_cmd whiptail && USE_GUI=true || USE_GUI=false
 
 # --- SMART HARDWARE DIAGNOSIS ---
 echo -e "\n${BOLD}${CYAN}🖥 HARDWARE-CHECK${NC}"
-GPU_INFO=$(lspci | grep -iE "vga|3d")
+GPU_INFO=$(lspci 2>/dev/null | grep -iE "vga|3d")
 BACKPORTS_ACTIVE=$(grep -r "^deb.*backports" /etc/apt/sources.list /etc/apt/sources.list.d/ 2>/dev/null)
 
-# NVIDIA Check
 if echo "$GPU_INFO" | grep -iq "nvidia"; then
     if ! lsmod | grep -iq "nvidia"; then
         echo -e "${YELLOW}⚠️  NVIDIA-GPU erkannt, aber der proprietäre Treiber ist NICHT geladen.${NC}"
-        echo -e "   Tipp: Installiere 'nvidia-driver' und aktiviere 'non-free' Quellen für volle Leistung."
     else
         echo -e "${GREEN}✓ NVIDIA-Treiber ist aktiv.${NC}"
     fi
 fi
-
-# AMD Check
 if echo "$GPU_INFO" | grep -iqE "amd|ati"; then
     echo -e "${GREEN}✓ AMD-GPU erkannt (Mesa/amdgpu).${NC}"
-    echo -e "   Tipp: Stelle sicher, dass 'firmware-amd-graphics' (ggf. aus Backports) installiert ist."
 fi
-
-# Backports Check
 if [ -z "$BACKPORTS_ACTIVE" ]; then
     echo -e "${YELLOW}ℹ️  Debian Backports sind nicht aktiviert.${NC}"
-    echo -e "   Empfohlen für neuere Grafik-Firmware und Kernel-Komponenten."
 fi
 
 # --- ROOT-RECHTE ---
@@ -126,16 +141,12 @@ CURRENT_DE=$(echo $XDG_CURRENT_DESKTOP | tr '[:upper:]' '[:lower:]')
 case "$CURRENT_DE" in
     *cinnamon*)
         if check_cmd cinnamon-spice-updater; then
-            echo -e "\n\n${BOLD}${PURPLE}📂 [CINNAMON]${NC} ${CYAN}Aktualisiere Applets & Extensions...${NC}"
+            echo -e "\n\n${BOLD}${PURPLE}📂 [CINNAMON]${NC} ${CYAN}Aktualisiere Applets...${NC}"
             if cinnamon-spice-updater --update-all; then UPDATED+=("Cinnamon Spices"); fi
         fi
         ;;
-    *gnome*)
-        echo -e "\n\n${BOLD}${PURPLE}📂 [GNOME]${NC} ${CYAN}System-Komponenten werden via APT/Flatpak gepflegt.${NC}"
-        ;;
-    *xfce*)
-        echo -e "\n\n${BOLD}${PURPLE}📂 [XFCE]${NC} ${CYAN}Umgebung wird via APT gepflegt.${NC}"
-        ;;
+    *gnome*) echo -e "\n\n${BOLD}${PURPLE}📂 [GNOME]${NC} ${CYAN}Systempflege via APT/Flatpak.${NC}" ;;
+    *xfce*) echo -e "\n\n${BOLD}${PURPLE}📂 [XFCE]${NC} ${CYAN}Systempflege via APT.${NC}" ;;
 esac
 
 # 6. Gaming
