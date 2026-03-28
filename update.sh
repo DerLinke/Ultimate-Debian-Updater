@@ -1,6 +1,6 @@
 #!/bin/bash
 # ==============================================================================
-# 🚀 Ultimate Debian Updater v2.0 (Modern TUI)
+# 🚀 Ultimate Debian Updater v2.1
 # ------------------------------------------------------------------------------
 # Ein all-in-one Update-Skript für Debian-basierte Systeme.
 # Unterstützt: APT, Flatpak, Snap, NPM, Desktop-Spices (Cinnamon/XFCE/GNOME).
@@ -19,27 +19,40 @@ export PATH="$HOME/.local/bin:$PATH"
 
 check_cmd() { command -v "$1" >/dev/null 2>&1; }
 
-# Prüfen ob whiptail vorhanden ist, sonst Fallback auf Text
-if check_cmd whiptail; then USE_GUI=true; else USE_GUI=false; fi
-
 # --- FARBEN (für Text-Modus) ---
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'; CYAN='\033[0;36m'; NC='\033[0m'
-
-# --- DESKTOP ERKENNUNG ---
-CURRENT_DE=$(echo $XDG_CURRENT_DESKTOP | tr '[:upper:]' '[:lower:]')
 
 # --- HEADER ---
 clear
 echo -e "${BLUE}====================================================${NC}"
-echo -e "${CYAN}          🚀 Ultimate Debian Updater v2.0 🚀          ${NC}"
+echo -e "${CYAN}          🚀 Ultimate Debian Updater v2.1 🚀          ${NC}"
 echo -e "${YELLOW}           Created by DerLinke (GitHub)           ${NC}"
 echo -e "${BLUE}====================================================${NC}"
 echo ""
 
-# --- ROOT-RECHTE (mit grafischem Prompt falls möglich) ---
+# --- DEPENDENCY CHECK ---
+MISSING_DEPS=()
+check_cmd whiptail || MISSING_DEPS+=("whiptail")
+check_cmd notify-send || MISSING_DEPS+=("libnotify-bin")
+check_cmd fwupdmgr || MISSING_DEPS+=("fwupd")
+
+if [ ${#MISSING_DEPS[@]} -gt 0 ]; then
+    echo -e "${YELLOW}[Info] Es fehlen Pakete für das optimale Erlebnis: ${MISSING_DEPS[*]}${NC}"
+    echo -n "Sollen diese jetzt installiert werden? (j/n): "
+    read -r install_choice
+    if [[ "$install_choice" =~ ^([jJ][aA]|[jJ])$ ]]; then
+        sudo apt update && sudo apt install -y "${MISSING_DEPS[@]}"
+    fi
+fi
+
+# Prüfen ob whiptail jetzt vorhanden ist
+if check_cmd whiptail; then USE_GUI=true; else USE_GUI=false; fi
+
+# --- DESKTOP ERKENNUNG ---
+CURRENT_DE=$(echo $XDG_CURRENT_DESKTOP | tr '[:upper:]' '[:lower:]')
+
+# --- ROOT-RECHTE ---
 if [ "$USE_GUI" = true ]; then
-    # Wir nutzen sudo -v direkt, da whiptail keine sichere Passworteingabe für sudo im Hintergrund leisten kann
-    # Aber wir zeigen eine Info-Box an.
     whiptail --title "$TITLE" --msgbox "Das Skript benötigt Root-Rechte für die Updates. Bitte gib dein Passwort im Terminal ein." 10 60
 fi
 
@@ -58,7 +71,9 @@ while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
 if check_cmd fwupdmgr; then
     echo -e "${CYAN}[Firmware] Suche nach Hardware-Updates...${NC}"
     sudo fwupdmgr refresh >/dev/null 2>&1
-    sudo fwupdmgr get-updates
+    if sudo fwupdmgr get-updates; then
+        echo -e "${GREEN}[Firmware] Updates geprüft.${NC}"
+    fi
 fi
 
 # 2. Extrepo
@@ -105,12 +120,9 @@ case "$CURRENT_DE" in
             if cinnamon-spice-updater --update-all; then UPDATED+=("Cinnamon Spices"); fi
         fi
         ;;
-    *gnome*)
-        echo -e "${CYAN}[GNOME] System-Komponenten sind in APT/Flatpak enthalten.${NC}"
-        ;;
     *xfce*)
         echo -e "${CYAN}[XFCE] Optimiere XFCE-Umgebung...${NC}"
-        # XFCE Updates kommen meist via APT, hier könnten spezifische XFCE-Skripte stehen
+        # Hier könnten künftige XFCE-spezifische Tools ergänzt werden
         ;;
 esac
 
