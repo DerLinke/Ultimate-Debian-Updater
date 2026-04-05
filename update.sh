@@ -13,12 +13,18 @@ VERSION="2.5.1"
 RAW_URL="https://raw.githubusercontent.com/DerLinke/Ultimate-Debian-Updater/main/update.sh"
 
 # --- KONFIGURATION ---
-STEAM_GE_PATH="$HOME/.local/share/Steam/compatibilitytools.d/"
-TITLE="Ultimate Debian Updater"
+# Alle Variablen können über Umgebungsvariablen überschrieben werden.
+: "${STEAM_GE_PATH:=$HOME/.local/share/Steam/compatibilitytools.d/}"
+: "${TITLE:=Ultimate Debian Updater}"
+: "${CLEANUP_LOG_DAYS:=3d}"
+: "${ENABLE_ALIAS_CHECK:=true}"
+: "${DEBGET_TOKEN:=DEIN_GITHUB_TOKEN_HIER}"
+export DEBGET_TOKEN
 
 # --- INITIALISIERUNG ---
+VERSION="2.5.2"
+RAW_URL="https://raw.githubusercontent.com/DerLinke/Ultimate-Debian-Updater/main/update.sh"
 UPDATED=(); FAILED=(); SKIPPED=()
-export PATH="$HOME/.local/bin:$PATH"
 
 check_cmd() { command -v "$1" >/dev/null 2>&1; }
 
@@ -38,21 +44,23 @@ echo -e "${YELLOW}           Created by DerLinke (GitHub)           ${NC}"
 echo -e "${BLUE}====================================================${NC}"
 
 # --- ALIAS CHECK ---
-CURRENT_SCRIPT_PATH=$(readlink -f "$0")
-if ! grep -q "alias update=" ~/.bashrc; then
-    echo -e "\n${BOLD}${CYAN}⌨️  SCHNELLSTART-OPTIMIERUNG${NC}"
-    echo -e "Möchtest du den Alias '${BOLD}update${NC}' in deiner .bashrc anlegen?"
-    echo -e "Dadurch kannst du dieses Skript einfach mit ${BOLD}update${NC} starten."
-    echo -n "Drücke [ENTER] zum Bestätigen (Überspringen in 3 Sek...): "
-    if read -t 3; then
-        echo "alias update='$CURRENT_SCRIPT_PATH'" >> ~/.bashrc
-        echo -e "\n${GREEN}✓ Alias 'update' wurde zu ~/.bashrc hinzugefügt!${NC}"
-        echo -e "${YELLOW}Info: Wirksam nach Neustart des Terminals.${NC}"
+if [[ "$ENABLE_ALIAS_CHECK" == "true" ]]; then
+    CURRENT_SCRIPT_PATH=$(readlink -f "$0")
+    if ! grep -q "alias update=" ~/.bashrc; then
+        echo -e "\n${BOLD}${CYAN}⌨️  SCHNELLSTART-OPTIMIERUNG${NC}"
+        echo -e "Möchtest du den Alias '${BOLD}update${NC}' in deiner .bashrc anlegen?"
+        echo -e "Dadurch kannst du dieses Skript einfach mit ${BOLD}update${NC} starten."
+        echo -n "Drücke [ENTER] zum Bestätigen (Überspringen in 3 Sek...): "
+        if read -t 3; then
+            echo "alias update='$CURRENT_SCRIPT_PATH'" >> ~/.bashrc
+            echo -e "\n${GREEN}✓ Alias 'update' wurde zu ~/.bashrc hinzugefügt!${NC}"
+            echo -e "${YELLOW}Info: Wirksam nach Neustart des Terminals.${NC}"
+        else
+            echo -e "\n${BLUE}ℹ️  Übersprungen.${NC}"
+        fi
     else
-        echo -e "\n${BLUE}ℹ️  Übersprungen.${NC}"
+        echo -e "\n${GREEN}✓ Schnellstart-Alias 'update' ist bereits konfiguriert.${NC}"
     fi
-else
-    echo -e "\n${GREEN}✓ Schnellstart-Alias 'update' ist bereits konfiguriert.${NC}"
 fi
 
 # --- SELF-UPDATE CHECK ---
@@ -256,7 +264,7 @@ fi
 
 # 10. System-Hygiene
 echo -e "\n${BOLD}${PURPLE}🧹 [10/10] REINIGUNG${NC} ${CYAN}Logs und Cache...${NC}"
-sudo journalctl --vacuum-time=3d >/dev/null 2>&1
+sudo journalctl --vacuum-time="${CLEANUP_LOG_DAYS}" >/dev/null 2>&1
 rm -rf ~/.cache/thumbnails/*
 echo -e "  ${GREEN}✓ Reinigung abgeschlossen.${NC}"
 
