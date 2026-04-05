@@ -87,15 +87,35 @@ if echo "$GPU_INFO" | grep -iq "nvidia"; then
 fi
 if echo "$GPU_INFO" | grep -iqE "amd|ati"; then
     echo -e "${GREEN}✓ AMD-GPU erkannt (Mesa/amdgpu).${NC}"
+    # Mesa Version
+    if check_cmd glxinfo; then
+        MESA_VER=$(glxinfo -B | grep "OpenGL version string" | cut -d' ' -f4-)
+        echo -e "   ${BLUE}Mesa:${NC} $MESA_VER"
+    fi
+    # Vulkan Version
+    if check_cmd vulkaninfo; then
+        VULKAN_VER=$(vulkaninfo --summary | grep "driverVersion" | head -n1 | awk '{print $3}')
+        echo -e "   ${BLUE}Vulkan Driver:${NC} $VULKAN_VER"
+    fi
 fi
-if [ -z "$BACKPORTS_ACTIVE" ]; then
+if [ -n "$BACKPORTS_ACTIVE" ]; then
+    echo -e "${GREEN}✓ Debian Backports sind aktiv.${NC}"
+else
     echo -e "${YELLOW}ℹ️  Debian Backports sind nicht aktiviert.${NC}"
 fi
 
+# --- MANAGER OVERVIEW ---
+echo -e "\n${BOLD}${CYAN}🔍 PAKETMANAGER-ÜBERSICHT${NC}"
+MANAGERS=("apt" "flatpak" "snap" "deb-get" "npm" "cinnamon-spice-updater" "protonup")
+for m in "${MANAGERS[@]}"; do
+    if check_cmd "$m"; then
+        echo -e "  ${GREEN}[VORHANDEN]${NC} $m"
+    else
+        echo -e "  ${RED}[FEHLT]${NC}     $m (wird übersprungen)"
+    fi
+done
+
 # --- ROOT-RECHTE ---
-if [ "$USE_GUI" = true ]; then
-    whiptail --title "$TITLE" --msgbox "Das Skript benötigt Root-Rechte. Bitte gib dein Passwort im Terminal ein." 10 60
-fi
 echo -e "\n${BOLD}${YELLOW}🔐 AUTHENTIFIZIERUNG${NC}"
 if ! sudo -v; then echo -e "${RED}Fehler: Root-Rechte erforderlich.${NC}"; exit 1; fi
 while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
@@ -119,26 +139,32 @@ fi
 if check_cmd apt; then
     echo -e "\n\n${BOLD}${PURPLE}📂 [APT SYSTEM]${NC} ${CYAN}System-Update...${NC}"
     sudo apt update
+    APT_COUNT=$(apt list --upgradable 2>/dev/null | grep -c "upgradable")
     if sudo apt full-upgrade -y; then
         echo -e "\n${BOLD}${GREEN}🧹 [APT CLEANUP]${NC} ${CYAN}Räumen...${NC}"
-        sudo apt autoremove -y && sudo apt autoclean
-        UPDATED+=("APT (System)"); 
+        # Erfasse Anzahl der entfernten Pakete (grob geschätzt durch autoremove Output)
+        AUTOREMOVE_OUT=$(sudo apt autoremove -y)
+        CLEAN_COUNT=$(echo "$AUTOREMOVE_OUT" | grep -c "Entfernen von")
+        sudo apt autoclean
+        UPDATED+=("APT (System: $APT_COUNT Pakete, $CLEAN_COUNT bereinigt)"); 
     else FAILED+=("APT (System)"); fi
 fi
 
 # 4. Flatpak
 if check_cmd flatpak; then
     echo -e "\n\n${BOLD}${PURPLE}📂 [FLATPAK]${NC} ${CYAN}App-Updates...${NC}"
+    FLAT_COUNT=$(flatpak remote-ls --updates | wc -l)
     if sudo flatpak update -y; then 
         sudo flatpak uninstall --unused -y
-        UPDATED+=("Flatpak"); 
+        UPDATED+=("Flatpak ($FLAT_COUNT Updates)"); 
     else FAILED+=("Flatpak"); fi
 fi
 
 # 5. Snap
 if check_cmd snap; then
     echo -e "\n\n${BOLD}${PURPLE}📂 [SNAP]${NC} ${CYAN}Aktualisiere Snaps...${NC}"
-    if sudo snap refresh; then UPDATED+=("Snap"); else FAILED+=("Snap"); fi
+    SNAP_COUNT=$(snap refresh --list 2>/dev/null | grep -c "   ")
+    if sudo snap refresh; then UPDATED+=("Snap ($SNAP_COUNT Updates)"); else FAILED+=("Snap"); fi
 fi
 
 # 6. deb-get / get-deb
@@ -170,7 +196,8 @@ esac
 # 8. NPM
 if check_cmd npm; then
     echo -e "\n\n${BOLD}${PURPLE}📂 [NPM]${NC} ${CYAN}Aktualisiere globale Pakete...${NC}"
-    if sudo npm update -g; then UPDATED+=("NPM"); else FAILED+=("NPM"); fi
+    NPM_COUNT=$(npm outdated -g --depth=0 2>/dev/null | grep -c "  ")
+    if sudo npm update -g; then UPDATED+=("NPM ($NPM_COUNT Updates)"); else FAILED+=("NPM"); fi
 fi
 
 # 9. Gaming
@@ -191,10 +218,18 @@ echo -e "${GREEN}✓ Reinigung abgeschlossen.${NC}"
 if [ "$USE_GUI" = true ]; then
     SUMMARY="Erfolgreich aktualisiert:\n"
     for item in "${UPDATED[@]}"; do SUMMARY="$SUMMARY ✅ $item\n"; done
-    whiptail --title "Zusammenfassung" --msgbox "$SUMMARY" 15 60
+    if [ ${#FAILED[@]} -gt 0 ]; then
+        SUMMARY="$SUMMARY\nFehlgeschlagen:\n"
+        for item in "${FAILED[@]}"; do SUMMARY="$SUMMARY ❌ $item\n"; done
+    fi
+    whiptail --title "Zusammenfassung" --msgbox "$SUMMARY" 18 70
 else
     echo -e "\n\n${BOLD}${GREEN}🏁 FERTIG!${NC}"
     for item in "${UPDATED[@]}"; do echo -e "  ✅ $item"; done
+    if [ ${#FAILED[@]} -gt 0 ]; then
+        echo -e "\n${BOLD}${RED}⚠️ FEHLER:${NC}"
+        for item in "${FAILED[@]}"; do echo -e "  ❌ $item"; done
+    fi
 fi
 
 # Abschluss-Aktion
