@@ -1,6 +1,6 @@
 #!/bin/bash
 # ==============================================================================
-# 🚀 Ultimate Debian Updater v2.4.2
+# 🚀 Ultimate Debian Updater v2.4.3
 # ------------------------------------------------------------------------------
 # Ein all-in-one Update-Skript für Debian-basierte Systeme.
 # Unterstützt: APT, Flatpak, deb-get, Hardware-Check, Self-Update, Forced Colors.
@@ -9,7 +9,7 @@
 # Copyright (c) 2026 DerLinke
 # ==============================================================================
 
-VERSION="2.4.2"
+VERSION="2.4.3"
 RAW_URL="https://raw.githubusercontent.com/DerLinke/Ultimate-Debian-Updater/main/update.sh"
 
 # --- KONFIGURATION ---
@@ -75,7 +75,8 @@ check_cmd whiptail && USE_GUI=true || USE_GUI=false
 # --- SMART HARDWARE DIAGNOSIS ---
 echo -e "\n${BOLD}${CYAN}🖥 HARDWARE-CHECK${NC}"
 GPU_INFO=$(lspci 2>/dev/null | grep -iE "vga|3d")
-BACKPORTS_ACTIVE=$(grep -r "^deb.*backports" /etc/apt/sources.list /etc/apt/sources.list.d/ 2>/dev/null)
+# Suche nach 'backports' in allen Quellen, ignoriere aber Kommentare (#)
+BACKPORTS_ACTIVE=$(grep -rE "backports" /etc/apt/sources.list /etc/apt/sources.list.d/ 2>/dev/null | grep -v "^#")
 
 if echo "$GPU_INFO" | grep -iq "nvidia"; then
     if ! lsmod | grep -iq "nvidia"; then
@@ -144,8 +145,10 @@ fi
 if check_cmd deb-get; then
     echo -e "\n\n${BOLD}${PURPLE}📂 [DEB-GET]${NC} ${CYAN}Aktualisiere Drittanbieter-Apps...${NC}"
     # GitHub API Token setzen, um Rate-Limits zu vermeiden (Token unter https://github.com/settings/tokens erstellen)
-    export DEBGET_TOKEN="DEIN_GITHUB_TOKEN_HIER"
-    if sudo -E deb-get update && sudo -E deb-get upgrade -y; then UPDATED+=("deb-get"); else FAILED+=("deb-get"); fi
+    # Empfehlung: Token in ~/.bashrc exportieren, statt hier im Skript zu speichern.
+    : "${DEBGET_TOKEN:=DEIN_GITHUB_TOKEN_HIER}"
+    export DEBGET_TOKEN
+    if sudo -E deb-get update && sudo -E deb-get upgrade -y; then deb-get clean && UPDATED+=("deb-get"); else FAILED+=("deb-get"); fi
 elif check_cmd get-deb; then
     echo -e "\n\n${BOLD}${PURPLE}📂 [GET-DEB]${NC} ${CYAN}Aktualisiere...${NC}"
     if sudo get-deb update; then UPDATED+=("get-deb"); else FAILED+=("get-deb"); fi
