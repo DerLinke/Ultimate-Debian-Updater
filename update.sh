@@ -1,6 +1,6 @@
 #!/bin/bash
 # ==============================================================================
-# 🚀 Ultimate Debian Updater v2.5.0
+# 🚀 Ultimate Debian Updater v2.5.1
 # ------------------------------------------------------------------------------
 # Ein all-in-one Update-Skript für Debian-basierte Systeme.
 # Unterstützt: APT, Flatpak, deb-get, Hardware-Check, Self-Update, Forced Colors.
@@ -9,7 +9,7 @@
 # Copyright (c) 2026 DerLinke
 # ==============================================================================
 
-VERSION="2.5.0"
+VERSION="2.5.1"
 RAW_URL="https://raw.githubusercontent.com/DerLinke/Ultimate-Debian-Updater/main/update.sh"
 
 # --- KONFIGURATION ---
@@ -36,6 +36,24 @@ echo -e "${BLUE}====================================================${NC}"
 echo -e "${BOLD}${CYAN}          🚀 Ultimate Debian Updater v$VERSION 🚀          ${NC}"
 echo -e "${YELLOW}           Created by DerLinke (GitHub)           ${NC}"
 echo -e "${BLUE}====================================================${NC}"
+
+# --- ALIAS CHECK ---
+CURRENT_SCRIPT_PATH=$(readlink -f "$0")
+if ! grep -q "alias update=" ~/.bashrc; then
+    echo -e "\n${BOLD}${CYAN}⌨️  SCHNELLSTART-OPTIMIERUNG${NC}"
+    echo -e "Möchtest du den Alias '${BOLD}update${NC}' in deiner .bashrc anlegen?"
+    echo -e "Dadurch kannst du dieses Skript einfach mit ${BOLD}update${NC} starten."
+    echo -n "Drücke [ENTER] zum Bestätigen (Überspringen in 3 Sek...): "
+    if read -t 3; then
+        echo "alias update='$CURRENT_SCRIPT_PATH'" >> ~/.bashrc
+        echo -e "\n${GREEN}✓ Alias 'update' wurde zu ~/.bashrc hinzugefügt!${NC}"
+        echo -e "${YELLOW}Info: Wirksam nach Neustart des Terminals.${NC}"
+    else
+        echo -e "\n${BLUE}ℹ️  Übersprungen.${NC}"
+    fi
+else
+    echo -e "\n${GREEN}✓ Schnellstart-Alias 'update' ist bereits konfiguriert.${NC}"
+fi
 
 # --- SELF-UPDATE CHECK ---
 if check_cmd curl; then
