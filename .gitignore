@@ -1,0 +1,7 @@
+# Git Ignore
+GEMINI.md
+.env
+*.log
+/tmp/
+build/
+bin/
