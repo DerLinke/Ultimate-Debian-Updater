@@ -108,7 +108,13 @@ if check_cmd fwupdmgr; then
     sudo fwupdmgr get-updates
 fi
 
-# 2. APT
+# 2. Extrepo
+if check_cmd extrepo; then
+    echo -e "\n\n${BOLD}${PURPLE}📂 [EXTREPO]${NC} ${CYAN}Aktualisiere Quellen...${NC}"
+    if sudo extrepo update; then UPDATED+=("Extrepo"); else FAILED+=("Extrepo"); fi
+fi
+
+# 3. APT
 if check_cmd apt; then
     echo -e "\n\n${BOLD}${PURPLE}📂 [APT SYSTEM]${NC} ${CYAN}System-Update...${NC}"
     sudo apt update
@@ -119,7 +125,7 @@ if check_cmd apt; then
     else FAILED+=("APT (System)"); fi
 fi
 
-# 3. Flatpak
+# 4. Flatpak
 if check_cmd flatpak; then
     echo -e "\n\n${BOLD}${PURPLE}📂 [FLATPAK]${NC} ${CYAN}App-Updates...${NC}"
     if sudo flatpak update -y; then 
@@ -128,13 +134,13 @@ if check_cmd flatpak; then
     else FAILED+=("Flatpak"); fi
 fi
 
-# 4. Snap
+# 5. Snap
 if check_cmd snap; then
     echo -e "\n\n${BOLD}${PURPLE}📂 [SNAP]${NC} ${CYAN}Aktualisiere Snaps...${NC}"
     if sudo snap refresh; then UPDATED+=("Snap"); else FAILED+=("Snap"); fi
 fi
 
-# 5. deb-get / get-deb
+# 6. deb-get / get-deb
 if check_cmd deb-get; then
     echo -e "\n\n${BOLD}${PURPLE}📂 [DEB-GET]${NC} ${CYAN}Aktualisiere Drittanbieter-Apps...${NC}"
     # GitHub API Token setzen, um Rate-Limits zu vermeiden (Token unter https://github.com/settings/tokens erstellen)
@@ -145,7 +151,7 @@ elif check_cmd get-deb; then
     if sudo get-deb update; then UPDATED+=("get-deb"); else FAILED+=("get-deb"); fi
 fi
 
-# 6. Desktop-Spezifisches
+# 7. Desktop-Spezifisches
 CURRENT_DE=$(echo $XDG_CURRENT_DESKTOP | tr '[:upper:]' '[:lower:]')
 case "$CURRENT_DE" in
     *cinnamon*)
@@ -158,7 +164,13 @@ case "$CURRENT_DE" in
     *xfce*) echo -e "\n\n${BOLD}${PURPLE}📂 [XFCE]${NC} ${CYAN}Systempflege via APT.${NC}" ;;
 esac
 
-# 7. Gaming
+# 8. NPM
+if check_cmd npm; then
+    echo -e "\n\n${BOLD}${PURPLE}📂 [NPM]${NC} ${CYAN}Aktualisiere globale Pakete...${NC}"
+    if sudo npm update -g; then UPDATED+=("NPM"); else FAILED+=("NPM"); fi
+fi
+
+# 9. Gaming
 if check_cmd protonup; then
     if [ -d "$STEAM_GE_PATH" ]; then
         echo -e "\n\n${BOLD}${PURPLE}📂 [GAMING]${NC} ${CYAN}GE-Proton Updates...${NC}"
@@ -166,7 +178,7 @@ if check_cmd protonup; then
     fi
 fi
 
-# 8. System-Hygiene
+# 10. System-Hygiene
 echo -e "\n\n${BOLD}${PURPLE}🧹 [REINIGUNG]${NC} ${CYAN}Logs und Cache...${NC}"
 sudo journalctl --vacuum-time=3d >/dev/null 2>&1
 rm -rf ~/.cache/thumbnails/*
