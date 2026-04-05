@@ -1,6 +1,6 @@
 #!/bin/bash
 # ==============================================================================
-# 🚀 Ultimate Debian Updater v2.7.0
+# 🚀 Ultimate Debian Updater v2.7.1
 # ------------------------------------------------------------------------------
 # Ein intelligentes All-in-one Update-Skript für Debian-basierte Systeme.
 # Fokus: System-Stabilität, Gaming-Performance (Gamer-Mode) und Hygiene.
@@ -10,13 +10,12 @@
 # ==============================================================================
 
 # --- KONFIGURATION (VORGABEN) ---
-# Hier kannst du das Standardverhalten festlegen.
-: "${DEFAULT_MODE:=full}"           # Optionen: full, system, game
+: "${DEFAULT_MODE:=full}"
 : "${STEAM_GE_PATH:=$HOME/.local/share/Steam/compatibilitytools.d/}"
 : "${TITLE:=Ultimate Debian Updater}"
 : "${CLEANUP_LOG_DAYS:=3d}"
 : "${ENABLE_ALIAS_CHECK:=true}"
-: "${DEBGET_TOKEN:=}"               # GitHub Token für deb-get (optional)
+: "${DEBGET_TOKEN:=}"
 
 # --- KONFIGURATION (GAMER-MODE) ---
 : "${GAMER_MODE:=true}"
@@ -25,14 +24,10 @@
 : "${MANAGE_VULKAN_LAYERS:=true}"
 
 # --- INITIALISIERUNG ---
-VERSION="2.7.0"
+VERSION="2.7.1"
 RAW_URL="https://raw.githubusercontent.com/DerLinke/Ultimate-Debian-Updater/main/update.sh"
 UPDATED=(); FAILED=(); SKIPPED=()
-export PATH="$HOME/.local/bin:$PATH"
-
-# Steuerungsvariablen basierend auf DEFAULT_MODE
-RUN_SYSTEM=true
-RUN_GAMING=true
+export PATH="$HOME/.local/bin:/usr/local/bin:$PATH"
 
 check_cmd() { 
     command -v "$1" >/dev/null 2>&1 || [ -f "$HOME/.local/bin/$1" ] || [ -f "/usr/local/bin/$1" ]
@@ -45,37 +40,14 @@ if [[ -n "$FORCE_COLOR" ]] || (check_cmd tput && [ $(tput colors 2>/dev/null || 
 fi
 : "${BOLD:=}"; : "${NC:=}"; : "${RED:=}"; : "${GREEN:=}"; : "${YELLOW:=}"; : "${BLUE:=}"; : "${PURPLE:=}"; : "${CYAN:=}"
 
-# --- HILFE & PARAMETER ---
-show_help() {
-    echo -e "${BLUE}====================================================${NC}"
-    echo -e "${BOLD}${CYAN}          $TITLE v$VERSION Hilfe          ${NC}"
-    echo -e "${BLUE}====================================================${NC}"
-    echo -e "\n${BOLD}NUTZUNG:${NC} update [PARAMETER]"
-    echo -e "\n${BOLD}PARAMETER:${NC}"
-    echo -e "  ${GREEN}--full${NC}      System- und Gaming-Updates"
-    echo -e "  ${GREEN}--system${NC}    Nur System-Updates (APT, Flatpak, Snap, etc.)"
-    echo -e "  ${GREEN}--game${NC}      Nur Gaming-Updates (Proton, MangoHud, etc.)"
-    echo -e "  ${GREEN}--version${NC}   Zeigt die aktuelle Version des Skripts"
-    echo -e "  ${GREEN}--help${NC}      Zeigt diese Hilfe an"
-    echo -e "\n${BOLD}INFO:${NC} Der Standard-Modus ist aktuell auf '${CYAN}$DEFAULT_MODE${NC}' gesetzt."
-    exit 0
-}
-
-# Modus-Steuerung
+# --- MODUS-STEUERUNG ---
+RUN_SYSTEM=true; RUN_GAMING=true
 case "$1" in
     --system) RUN_SYSTEM=true; RUN_GAMING=false ;;
     --game)   RUN_SYSTEM=false; RUN_GAMING=true ;;
     --full)   RUN_SYSTEM=true; RUN_GAMING=true ;;
-    --version) echo "v$VERSION"; exit 0 ;;
-    --help)    show_help ;;
-    "")       
-        case "$DEFAULT_MODE" in
-            system) RUN_SYSTEM=true; RUN_GAMING=false ;;
-            game)   RUN_SYSTEM=false; RUN_GAMING=true ;;
-            *)      RUN_SYSTEM=true; RUN_GAMING=true ;;
-        esac
-        ;;
-    *) echo -e "${RED}Unbekannter Parameter: $1${NC}"; show_help ;;
+    "") [ "$DEFAULT_MODE" == "system" ] && RUN_GAMING=false; [ "$DEFAULT_MODE" == "game" ] && RUN_SYSTEM=false ;;
+    *) echo -e "${RED}Unbekannter Parameter: $1${NC}"; exit 1 ;;
 esac
 
 # --- HEADER ---
@@ -85,69 +57,49 @@ echo -e "${BOLD}${CYAN}          🚀 $TITLE v$VERSION 🚀          ${NC}"
 echo -e "${YELLOW}           Created by DerLinke (GitHub)           ${NC}"
 echo -e "${BLUE}====================================================${NC}"
 
-# --- DYNAMISCHE GAMEMODE CONFIG LOGIK ---
+# --- SYMLINK LOGIK (FÜR GOverlay & Steam) ---
+fix_system_paths() {
+    local tools=("protontricks" "gamemoderun")
+    # FGMOD Spezial-Check
+    local fgmod_local="$HOME/.local/share/goverlay/fgmod/fgmod"
+    [ -f "$fgmod_local" ] && tools+=("fgmod:$fgmod_local")
+
+    for tool_info in "${tools[@]}"; do
+        local tool=${tool_info%%:*}
+        local custom_path=${tool_info#*:}
+        [ "$custom_path" == "$tool" ] && custom_path=$(which "$tool" 2>/dev/null || echo "$HOME/.local/bin/$tool")
+
+        if [ -f "$custom_path" ] && [ ! -f "/usr/local/bin/$tool" ]; then
+            echo -e "  ${YELLOW}→ Erstelle System-Symlink für '$tool' (für GOverlay/Steam)...${NC}"
+            sudo ln -sf "$custom_path" "/usr/local/bin/$tool" && UPDATED+=("Symlink: $tool")
+        fi
+    done
+}
+
+# --- DYNAMISCHE GAMEMODE CONFIG ---
 setup_gamemode_config() {
     local config_file="$HOME/.config/gamemode.ini"
-    local gov_path="/sys/devices/system/cpu/cpu0/cpufreq/scaling_available_governors"
-    local available_govs=""
-    [ -f "$gov_path" ] && available_govs=$(cat "$gov_path")
-
-    local high_perf="performance"
-    local balanced="powersave"
-    [[ "$available_govs" == *"schedutil"* ]] && balanced="schedutil"
-    [[ "$available_govs" == *"ondemand"* ]] && balanced="ondemand"
-
-    if [ ! -f "$config_file" ]; then
-        echo -e "  ${YELLOW}→ Erstelle optimierte GameMode Konfiguration...${NC}"
+    local gov_available=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_governors 2>/dev/null)
+    local high_perf="performance"; local balanced="powersave"
+    [[ "$gov_available" == *"schedutil"* ]] && balanced="schedutil"
+    
+    if [ ! -f "$config_file" ] || ! grep -q "governor=$high_perf" "$config_file"; then
+        echo -e "  ${YELLOW}→ Konfiguriere GameMode ($high_perf <-> $balanced)...${NC}"
         mkdir -p "$HOME/.config"
         echo -e "[general]\nreaper=true\n\n[gpu]\napply_gpu_optimisations=true\ngpu_device=0\namd_performance_level=high\n\n[cpu]\ngovernor=$high_perf\n\n[custom]\nstart=notify-send 'GameMode' 'Optimierungen aktiviert ($high_perf)'\nend=notify-send 'GameMode' 'Optimierungen deaktiviert ($balanced)'" > "$config_file"
-    else
-        if ! grep -q "governor=$high_perf" "$config_file"; then
-            echo -e "  ${YELLOW}→ Aktualisiere CPU-Governor in GameMode Config...${NC}"
-            sed -i "s/governor=.*/governor=$high_perf/" "$config_file"
-        fi
+        SKIPPED+=("GameMode Config (OK)")
     fi
 }
 
-# --- ABHÄNGIGKEITS-CHECK (GLOBAL) ---
-REQUIRED_BINS=("curl" "lspci" "lsb_release")
-[[ "$RUN_GAMING" == "true" ]] && REQUIRED_BINS+=("pipx" "glxinfo" "vulkaninfo")
-
-MISSING_BINS=()
-for bin in "${REQUIRED_BINS[@]}"; do
-    check_cmd "$bin" || MISSING_BINS+=("$bin")
-done
-
-if [ ${#MISSING_BINS[@]} -gt 0 ]; then
-    echo -e "\n${BOLD}${YELLOW}🔍 PRÜFUNG DER ABHÄNGIGKEITEN${NC}"
-    echo -e "${RED}Es fehlen wichtige Tools: ${BOLD}${MISSING_BINS[*]}${NC}"
-    read -p "Sollen diese jetzt via APT installiert werden? [j/n]: " inst_deps
-    if [[ "$inst_deps" =~ ^([jJ][aA]|[jJ])$ ]]; then
-        sudo apt update && sudo apt install -y "${MISSING_BINS[@]}"
-        [[ " ${MISSING_BINS[*]} " == *" pipx "* ]] && pipx ensurepath
-    fi
-fi
-
-# --- DIAGNOSE (HARDWARE & GAMING) ---
-echo -e "\n${BOLD}${CYAN}🖥 HARDWARE- & DIAGNOSE-CHECK${NC}"
-echo -e "${BLUE}----------------------------------------------------${NC}"
-
-# GPU Info
-GPU_INFO=$(lspci 2>/dev/null | grep -iE "vga|3d")
-if echo "$GPU_INFO" | grep -iq "nvidia"; then
-    check_cmd nvidia-smi && echo -e "  ${GREEN}✓ NVIDIA GPU:${NC} $(nvidia-smi --query-gpu=driver_version --format=csv,noheader)"
-elif echo "$GPU_INFO" | grep -iqE "amd|ati"; then
-    echo -e "  ${GREEN}✓ AMD GPU detected (Mesa).${NC}"
-fi
-
-# 32-Bit Check
+# --- DIAGNOSE ---
 if [[ "$RUN_GAMING" == "true" ]]; then
-    dpkg --print-foreign-architectures | grep -q "i386" && echo -e "  ${GREEN}✓ 32-Bit Architektur (i386) ist aktiv.${NC}" || echo -e "  ${RED}✗ 32-Bit Architektur fehlt.${NC}"
-fi
+    echo -e "\n${BOLD}${CYAN}🕹 GAMING-DIAGNOSE${NC}"
+    echo -e "${BLUE}----------------------------------------------------${NC}"
+    
+    # Check 32-Bit
+    dpkg --print-foreign-architectures | grep -q "i386" && echo -e "  ${GREEN}✓ 32-Bit Architektur (i386) ist aktiv.${NC}"
 
-# Gaming Tools Diagnosis
-if [[ "$RUN_GAMING" == "true" ]]; then
-    # Label:Check-Path/Cmd:Package-Name
+    # Gaming Tools Check
     GAMING_TOOLS_DB=(
         "MangoHud:mangohud:mangohud"
         "GOverlay:goverlay:goverlay"
@@ -158,29 +110,21 @@ if [[ "$RUN_GAMING" == "true" ]]; then
 
     MISSING_GAMING=()
     for tool_info in "${GAMING_TOOLS_DB[@]}"; do
-        label=${tool_info%%:*}
-        tmp=${tool_info#*:}
-        check=${tmp%:*}
-        pkg=${tool_info##*:}
-
-        found=false
-        if [[ "$check" == /* ]] && [ -f "$check" ]; then found=true;
-        elif check_cmd "$check"; then found=true; fi
-
-        if [ "$found" = true ]; then
-            case "$check" in
-                mangohud) echo -e "  ${GREEN}✓ $label:${NC} $(mangohud --version 2>/dev/null | head -n1)"; SKIPPED+=("$label (OK)") ;;
-                protontricks) echo -e "  ${GREEN}✓ $label:${NC} $(protontricks --version 2>/dev/null | head -n1)"; SKIPPED+=("$label (OK)") ;;
-                gamemoderun) echo -e "  ${GREEN}✓ $label:${NC} erkannt."; setup_gamemode_config; SKIPPED+=("$label (Config OK)") ;;
-                *) echo -e "  ${GREEN}✓ $label:${NC} erkannt."; SKIPPED+=("$label (OK)") ;;
-            esac
+        label=${tool_info%%:*}; tmp=${tool_info#*:}; check=${tmp%:*}; pkg=${tool_info##*:}
+        
+        if ([ -f "$check" ] || check_cmd "$check"); then
+            echo -e "  ${GREEN}✓ $label:${NC} erkannt."
+            [ "$check" == "gamemoderun" ] && setup_gamemode_config
         else
             echo -e "  ${RED}✗ $label:${NC} fehlt."
             MISSING_GAMING+=("$pkg")
         fi
     done
 
-    # Automatische Installation Gaming-Tools
+    # Symlinks fixen bevor der Bericht kommt
+    fix_system_paths
+
+    # Auto-Install
     if [ ${#MISSING_GAMING[@]} -gt 0 ]; then
         echo -e "\n${BOLD}${YELLOW}Fehlende Gaming-Tools installieren?${NC}"
         read -p "[j/n]: " inst_gaming
@@ -188,25 +132,15 @@ if [[ "$RUN_GAMING" == "true" ]]; then
             TO_INSTALL_APT=()
             for p in "${MISSING_GAMING[@]}"; do
                 if [[ "$p" == "pipx-protontricks" ]]; then
+                    check_cmd pipx || TO_INSTALL_APT+=("pipx")
                     pipx install protontricks && UPDATED+=("Protontricks (Neu)")
-                else
-                    TO_INSTALL_APT+=("$p")
-                fi
+                else TO_INSTALL_APT+=("$p"); fi
             done
             [ ${#TO_INSTALL_APT[@]} -gt 0 ] && sudo apt update && sudo apt install -y "${TO_INSTALL_APT[@]}" && UPDATED+=("Gaming-Tools (APT)")
+            fix_system_paths # Nochmal nach Installation
         fi
     fi
 fi
-
-# --- MANAGER OVERVIEW ---
-echo -e "\n${BOLD}${CYAN}🔍 MANAGER-ÜBERSICHT${NC}"
-echo -e "${BLUE}----------------------------------------------------${NC}"
-SYSTEM_MANAGERS=("apt" "flatpak" "snap" "deb-get" "npm" "pipx")
-echo -n "  ${BOLD}Status:${NC} "
-for m in "${SYSTEM_MANAGERS[@]}"; do
-    if check_cmd "$m"; then echo -ne "${GREEN}✓${NC} $m  "; else echo -ne "${RED}✗${NC} $m  "; fi
-done
-echo -e ""
 
 # --- AUTHENTIFIZIERUNG ---
 echo -e "\n${BOLD}${YELLOW}🔐 AUTHENTIFIZIERUNG${NC}"
@@ -218,7 +152,6 @@ echo -e "\n${BOLD}${CYAN}🔄 UPDATE-PROZESS STARTET${NC}"
 echo -e "${BLUE}====================================================${NC}"
 
 if [[ "$RUN_SYSTEM" == "true" ]]; then
-    # 1. Firmware, 2. Extrepo, 3. APT
     check_cmd fwupdmgr && (echo -e "\n${BOLD}${PURPLE}📂 FIRMWARE${NC}"; sudo fwupdmgr refresh >/dev/null 2>&1; sudo fwupdmgr get-updates && UPDATED+=("Firmware"))
     check_cmd extrepo && (echo -e "\n${BOLD}${PURPLE}📂 EXTREPO${NC}"; sudo extrepo update && UPDATED+=("Extrepo"))
     if check_cmd apt; then
@@ -238,7 +171,7 @@ if [[ "$RUN_GAMING" == "true" ]]; then
     if check_cmd mangohud; then
         LATEST_MANGO=$(curl -s https://api.github.com/repos/flightlessmango/MangoHud/releases/latest | grep tag_name | cut -d'"' -f4 | sed 's/v//')
         INSTALLED_MANGO=$(mangohud --version 2>/dev/null | head -n1 | sed 's/v//' | cut -d'-' -f1)
-        [[ "$LATEST_MANGO" > "$INSTALLED_MANGO" ]] && UPDATED+=("MangoHud (Source Update)") || SKIPPED+=("MangoHud (Aktuell)")
+        [[ "$LATEST_MANGO" > "$INSTALLED_MANGO" ]] && UPDATED+=("MangoHud (Update available)") || SKIPPED+=("MangoHud (Aktuell)")
         flatpak list | grep -q "MangoHud" && sudo flatpak uninstall -y org.freedesktop.Platform.VulkanLayer.MangoHud >/dev/null 2>&1
     fi
 fi
