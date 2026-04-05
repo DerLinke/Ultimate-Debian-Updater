@@ -1,6 +1,6 @@
 #!/bin/bash
 # ==============================================================================
-# 🚀 Ultimate Debian Updater v2.4.3
+# 🚀 Ultimate Debian Updater v2.4.4
 # ------------------------------------------------------------------------------
 # Ein all-in-one Update-Skript für Debian-basierte Systeme.
 # Unterstützt: APT, Flatpak, deb-get, Hardware-Check, Self-Update, Forced Colors.
@@ -9,7 +9,7 @@
 # Copyright (c) 2026 DerLinke
 # ==============================================================================
 
-VERSION="2.4.3"
+VERSION="2.4.4"
 RAW_URL="https://raw.githubusercontent.com/DerLinke/Ultimate-Debian-Updater/main/update.sh"
 
 # --- KONFIGURATION ---
@@ -83,21 +83,29 @@ if echo "$GPU_INFO" | grep -iq "nvidia"; then
         echo -e "${YELLOW}⚠️  NVIDIA-GPU erkannt, aber der proprietäre Treiber ist NICHT geladen.${NC}"
     else
         echo -e "${GREEN}✓ NVIDIA-Treiber ist aktiv.${NC}"
+        if check_cmd nvidia-smi; then
+            NVIDIA_VER=$(nvidia-smi --query-gpu=driver_version --format=csv,noheader)
+            echo -e "   ${BLUE}NVIDIA Driver:${NC} $NVIDIA_VER"
+        fi
     fi
 fi
 if echo "$GPU_INFO" | grep -iqE "amd|ati"; then
     echo -e "${GREEN}✓ AMD-GPU erkannt (Mesa/amdgpu).${NC}"
-    # Mesa Version
-    if check_cmd glxinfo; then
-        MESA_VER=$(glxinfo -B | grep "OpenGL version string" | cut -d' ' -f4-)
-        echo -e "   ${BLUE}Mesa:${NC} $MESA_VER"
-    fi
-    # Vulkan Version
-    if check_cmd vulkaninfo; then
-        VULKAN_VER=$(vulkaninfo --summary | grep "driverVersion" | head -n1 | awk '{print $3}')
-        echo -e "   ${BLUE}Vulkan Driver:${NC} $VULKAN_VER"
-    fi
 fi
+if echo "$GPU_INFO" | grep -iq "intel"; then
+    echo -e "${GREEN}✓ Intel-GPU erkannt.${NC}"
+fi
+
+# Mesa & Vulkan Versionen (Universal für alle GPUs)
+if check_cmd glxinfo; then
+    MESA_VER=$(glxinfo -B | grep "OpenGL version string" | cut -d' ' -f4-)
+    echo -e "   ${BLUE}Mesa:${NC} $MESA_VER"
+fi
+if check_cmd vulkaninfo; then
+    VULKAN_VER=$(vulkaninfo --summary | grep "driverVersion" | head -n1 | awk '{print $3}')
+    echo -e "   ${BLUE}Vulkan Driver:${NC} $VULKAN_VER"
+fi
+
 if [ -n "$BACKPORTS_ACTIVE" ]; then
     echo -e "${GREEN}✓ Debian Backports sind aktiv.${NC}"
 else
