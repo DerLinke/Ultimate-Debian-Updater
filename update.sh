@@ -1,15 +1,15 @@
 #!/bin/bash
 # ==============================================================================
-# 🚀 Ultimate Debian Updater v2.4
+# 🚀 Ultimate Debian Updater v2.4.2
 # ------------------------------------------------------------------------------
 # Ein all-in-one Update-Skript für Debian-basierte Systeme.
-# Unterstützt: APT, Flatpak, Hardware-Check, Self-Update.
+# Unterstützt: APT, Flatpak, deb-get, Hardware-Check, Self-Update, Forced Colors.
 #
 # GitHub: https://github.com/DerLinke/Ultimate-Debian-Updater
 # Copyright (c) 2026 DerLinke
 # ==============================================================================
 
-VERSION="2.4"
+VERSION="2.4.2"
 RAW_URL="https://raw.githubusercontent.com/DerLinke/Ultimate-Debian-Updater/main/update.sh"
 
 # --- KONFIGURATION ---
@@ -22,13 +22,11 @@ export PATH="$HOME/.local/bin:$PATH"
 
 check_cmd() { command -v "$1" >/dev/null 2>&1; }
 
-# --- FARBEN & STILE (tput für maximale Kompatibilität) ---
-if check_cmd tput; then
-    ncolors=$(tput colors 2>/dev/null)
-    if [ -n "$ncolors" ] && [ "$ncolors" -ge 8 ]; then
-        BOLD=$(tput bold); NC=$(tput sgr0); RED=$(tput setaf 1); GREEN=$(tput setaf 2)
-        YELLOW=$(tput setaf 3); BLUE=$(tput setaf 4); PURPLE=$(tput setaf 5); CYAN=$(tput setaf 6)
-    fi
+# --- FARBEN & STILE ---
+# Wir aktivieren Farben wenn tput >= 8 Farben meldet ODER wenn FORCE_COLOR gesetzt ist
+if [[ -n "$FORCE_COLOR" ]] || (check_cmd tput && [ $(tput colors 2>/dev/null || echo 0) -ge 8 ]); then
+    BOLD=$(tput bold); NC=$(tput sgr0); RED=$(tput setaf 1); GREEN=$(tput setaf 2)
+    YELLOW=$(tput setaf 3); BLUE=$(tput setaf 4); PURPLE=$(tput setaf 5); CYAN=$(tput setaf 6)
 fi
 : "${BOLD:=}"; : "${NC:=}"; : "${RED:=}"; : "${GREEN:=}"; : "${YELLOW:=}"; : "${BLUE:=}"; : "${PURPLE:=}"; : "${CYAN:=}"
 
@@ -136,7 +134,18 @@ if check_cmd snap; then
     if sudo snap refresh; then UPDATED+=("Snap"); else FAILED+=("Snap"); fi
 fi
 
-# 5. Desktop-Spezifisches
+# 5. deb-get / get-deb
+if check_cmd deb-get; then
+    echo -e "\n\n${BOLD}${PURPLE}📂 [DEB-GET]${NC} ${CYAN}Aktualisiere Drittanbieter-Apps...${NC}"
+    # GitHub API Token setzen, um Rate-Limits zu vermeiden (Token unter https://github.com/settings/tokens erstellen)
+    export DEBGET_TOKEN="DEIN_GITHUB_TOKEN_HIER"
+    if sudo -E deb-get update && sudo -E deb-get upgrade -y; then UPDATED+=("deb-get"); else FAILED+=("deb-get"); fi
+elif check_cmd get-deb; then
+    echo -e "\n\n${BOLD}${PURPLE}📂 [GET-DEB]${NC} ${CYAN}Aktualisiere...${NC}"
+    if sudo get-deb update; then UPDATED+=("get-deb"); else FAILED+=("get-deb"); fi
+fi
+
+# 6. Desktop-Spezifisches
 CURRENT_DE=$(echo $XDG_CURRENT_DESKTOP | tr '[:upper:]' '[:lower:]')
 case "$CURRENT_DE" in
     *cinnamon*)
@@ -149,7 +158,7 @@ case "$CURRENT_DE" in
     *xfce*) echo -e "\n\n${BOLD}${PURPLE}📂 [XFCE]${NC} ${CYAN}Systempflege via APT.${NC}" ;;
 esac
 
-# 6. Gaming
+# 7. Gaming
 if check_cmd protonup; then
     if [ -d "$STEAM_GE_PATH" ]; then
         echo -e "\n\n${BOLD}${PURPLE}📂 [GAMING]${NC} ${CYAN}GE-Proton Updates...${NC}"
@@ -157,7 +166,7 @@ if check_cmd protonup; then
     fi
 fi
 
-# 7. System-Hygiene
+# 8. System-Hygiene
 echo -e "\n\n${BOLD}${PURPLE}🧹 [REINIGUNG]${NC} ${CYAN}Logs und Cache...${NC}"
 sudo journalctl --vacuum-time=3d >/dev/null 2>&1
 rm -rf ~/.cache/thumbnails/*
