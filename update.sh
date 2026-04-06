@@ -24,7 +24,7 @@
 : "${MANAGE_VULKAN_LAYERS:=true}"
 
 # --- INITIALISIERUNG ---
-VERSION="2.8.0-BETA"
+VERSION="2.8.0"
 RAW_URL="https://raw.githubusercontent.com/DerLinke/Ultimate-Debian-Updater/main/update.sh"
 UPDATED=(); FAILED=(); SKIPPED=()
 export PATH="$HOME/.local/bin:/usr/local/bin:$PATH"
@@ -32,6 +32,27 @@ export PATH="$HOME/.local/bin:/usr/local/bin:$PATH"
 check_cmd() { 
     command -v "$1" >/dev/null 2>&1 || [ -f "$HOME/.local/bin/$1" ] || [ -f "/usr/local/bin/$1" ]
 }
+
+# --- SYSTEM REQUIREMENTS CHECK ---
+BASIS_DEPS=("curl" "lspci" "lsb_release" "7z")
+BASIS_PKGS=("curl" "pciutils" "lsb-release" "p7zip-full")
+MISSING_BASIS=()
+
+for i in "${!BASIS_DEPS[@]}"; do
+    if ! check_cmd "${BASIS_DEPS[$i]}"; then MISSING_BASIS+=("${BASIS_PKGS[$i]}"); fi
+done
+
+if [ ${#MISSING_BASIS[@]} -gt 0 ]; then
+    echo -e "\n${BOLD}${RED}⚠️  FEHLENDE BASIS-TOOLS${NC}"
+    echo -e "Die folgenden Pakete werden für das Skript benötigt: ${BOLD}${MISSING_BASIS[*]}${NC}"
+    read -p "Jetzt installieren? [j/n]: " inst_basis
+    if [[ "$inst_basis" =~ ^([jJ][aA]|[jJ])$ ]]; then
+        sudo apt update && sudo apt install -y "${MISSING_BASIS[@]}"
+    else
+        echo -e "${RED}Fehler: Ohne diese Tools kann das Skript nicht fortgesetzt werden.${NC}"
+        exit 1
+    fi
+fi
 
 # --- FARBEN & STILE ---
 if [[ -n "$FORCE_COLOR" ]] || (check_cmd tput && [ $(tput colors 2>/dev/null || echo 0) -ge 8 ]); then
