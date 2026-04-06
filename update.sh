@@ -74,7 +74,7 @@ DE_LABEL="Unbekannt"
 [[ "$CURRENT_DE" == *"cinnamon"* ]] && DE_LABEL="Cinnamon"
 [[ "$CURRENT_DE" == *"kde"* || "$CURRENT_DE" == *"plasma"* ]] && DE_LABEL="KDE Plasma"
 [[ "$CURRENT_DE" == *"mate"* ]] && DE_LABEL="Mate"
-[[ "$CURRENT_DE" == *"gnome"* ]] && DE_LABEL="GNOME"
+[[ "$CURRENT_DE" == *"gnome"* || "$CURRENT_DE" == *"pop"* ]] && DE_LABEL="GNOME (Pop!_OS)"
 [[ "$CURRENT_DE" == *"xfce"* ]] && DE_LABEL="XFCE"
 [[ "$CURRENT_DE" == *"gamescope"* ]] && DE_LABEL="Gamescope (SteamOS)"
 
@@ -246,8 +246,8 @@ if [[ "$RUN_SYSTEM" == "true" ]]; then
             sudo apt install --only-upgrade "xfce4-*" -y >/dev/null 2>&1
             UPDATED+=("XFCE Maintenance")
             ;;
-        *gnome*)
-            echo -e "  ${BLUE}GNOME:${NC} Systempflege via APT..."
+        *gnome*|*pop*)
+            echo -e "  ${BLUE}GNOME/Pop!_OS:${NC} Systempflege via APT..."
             sudo apt install --only-upgrade "gnome-shell" "gnome-control-center" -y >/dev/null 2>&1
             UPDATED+=("GNOME Maintenance")
             ;;
