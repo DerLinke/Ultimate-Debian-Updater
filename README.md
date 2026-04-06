@@ -36,3 +36,25 @@ Du kannst das Skript am Anfang der Datei anpassen:
 
 ---
 *Created with ❤️ by DerLinke*
+
+## 📊 Kompatibilitätsmatrix
+Das Skript wurde auf folgenden Konfigurationen erfolgreich getestet:
+
+| Distro | Desktop | 32bit | 64bit | arm | AMD | Nvidia |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: |
+| **Debian 12** | Cinnamon | ❔ | ✅ | ❔ | ✅ | ❔ |
+| **Debian 12** | XFCE | ❔ | ✅ | ❔ | ✅ | ❔ |
+| **Debian 13 (Trixie)** | Cinnamon | ❔ | ✅ | ❔ | ✅ | ❔ |
+| **Debian 13 (Trixie)** | Gnome | ❔ | ✅ | ❔ | ✅ | ❔ |
+| **Debian 13 (Trixie)** | XFCE | ❔ | ✅ | ❔ | ✅ | ❔ |
+| **Ubuntu 24.04** | Cinnamon | ❔ | ✅ | ❔ | ✅ | ❔ |
+| **Ubuntu 24.04** | Gnome | ❔ | ✅ | ❔ | ✅ | ❔ |
+| **Ubuntu 24.04** | XFCE | ❔ | ✅ | ❔ | ✅ | ❔ |
+| **Ubuntu 25.04** | Cinnamon | ❔ | ✅ | ❔ | ✅ | ❔ |
+| **Ubuntu 25.04** | Gnome | ❔ | ✅ | ❔ | ✅ | ❔ |
+| **Ubuntu 25.04** | XFCE | ❔ | ✅ | ❔ | ✅ | ❔ |
+| **LMDE 7** | Cinnamon | ❔ | ✅ | ❔ | ✅ | ❔ |
+| **SteamOS** | Gamescope | ❔ | ✅ | ❔ | ✅ | ❌ |
+
+**Legende:**
+✅ erfolgreich getestet | ❔ ungetestet | ❌ fehlerhaft/nicht unterstützt
