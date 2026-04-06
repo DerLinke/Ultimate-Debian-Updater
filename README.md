@@ -25,7 +25,7 @@ Das Skript wurde auf folgenden Konfigurationen erfolgreich getestet:
 | **Debian 13 (Trixie)** | Cinnamon | ❔ | ✅ | ❔ | ✅ | ❔ |
 | **Debian 13 (Trixie)** | GNOME | ❔ | ✅ | ❔ | ✅ | ❔ |
 | **Debian 13 (Trixie)** | XFCE | ❔ | ✅ | ❔ | ✅ | ❔ |
-| **Debian 13 (Trixie)** | KDE | ❔ | ❔ | ❔ | ❔ | ❔ |
+| **Debian 13 (Trixie)** | KDE | ❔ | ✅ | ❔ | ✅ | ❔ |
 | **Ubuntu 24.04** | Cinnamon | ❔ | ✅ | ❔ | ✅ | ❔ |
 | **Ubuntu 24.04** | GNOME | ❔ | ✅ | ❔ | ✅ | ❔ |
 | **Ubuntu 24.04** | XFCE | ❔ | ✅ | ❔ | ✅ | ❔ |
@@ -33,7 +33,7 @@ Das Skript wurde auf folgenden Konfigurationen erfolgreich getestet:
 | **Ubuntu 25.04** | Cinnamon | ❔ | ✅ | ❔ | ✅ | ❔ |
 | **Ubuntu 25.04** | GNOME | ❔ | ✅ | ❔ | ✅ | ❔ |
 | **Ubuntu 25.04** | XFCE | ❔ | ✅ | ❔ | ✅ | ❔ |
-| **Ubuntu 25.04** | KDE | ❔ | ❔ | ❔ | ❔ | ❔ |
+| **Ubuntu 25.04** | KDE | ❔ | ✅ | ❔ | ✅ | ❔ |
 | **PopOS 24** | GNOME | ❔ | ❔ | ❔ | ❔ | ❔ |
 | **Linux Mint** | Mate | ❔ | ❔ | ❔ | ❔ | ❔ |
 | **LMDE 7** | Cinnamon | ❔ | ✅ | ❔ | ✅ | ❔ |
