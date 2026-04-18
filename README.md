@@ -18,25 +18,26 @@ Das Skript wurde auf folgenden Konfigurationen erfolgreich getestet:
 
 | Distro | Desktop | 32bit | 64bit | arm | AMD | Nvidia |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
-| **Debian 12** | Cinnamon | ❔ | ✅ | ❔ | ✅ | ❔ |
-| **Debian 12** | GNOME | ❔ | ❔ | ❔ | ❔ | ❔ |
-| **Debian 12** | XFCE | ❔ | ✅ | ❔ | ✅ | ❔ |
-| **Debian 12** | KDE | ❔ | ❔ | ❔ | ❔ | ❔ |
-| **Debian 13 (Trixie)** | Cinnamon | ❔ | ✅ | ❔ | ✅ | ❔ |
-| **Debian 13 (Trixie)** | GNOME | ❔ | ✅ | ❔ | ✅ | ❔ |
-| **Debian 13 (Trixie)** | XFCE | ❔ | ✅ | ❔ | ✅ | ❔ |
-| **Debian 13 (Trixie)** | KDE | ❔ | ✅ | ❔ | ✅ | ❔ |
-| **Ubuntu 24.04** | Cinnamon | ❔ | ✅ | ❔ | ✅ | ❔ |
-| **Ubuntu 24.04** | GNOME | ❔ | ✅ | ❔ | ✅ | ❔ |
-| **Ubuntu 24.04** | XFCE | ❔ | ✅ | ❔ | ✅ | ❔ |
-| **Ubuntu 24.04** | KDE | ❔ | ❔ | ❔ | ❔ | ❔ |
-| **Ubuntu 25.04** | Cinnamon | ❔ | ✅ | ❔ | ✅ | ❔ |
-| **Ubuntu 25.04** | GNOME | ❔ | ✅ | ❔ | ✅ | ❔ |
-| **Ubuntu 25.04** | XFCE | ❔ | ✅ | ❔ | ✅ | ❔ |
+| **Debian 12** | Cinnamon | ✅ | ✅ | ❔ | ✅ | ❔ |
+| **Debian 12** | GNOME | ✅ | ✅ | ❔ | ✅ | ❔ |
+| **Debian 12** | XFCE | ✅ | ✅ | ❔ | ✅ | ❔ |
+| **Debian 12** | KDE | ❔ | ✅ | ❔ | ✅ | ❔ |
+| **Debian 13** | Cinnamon | ✅ | ✅ | ❔ | ✅ | ❔ |
+| **Debian 13** | GNOME | ✅ | ✅ | ❔ | ✅ | ❔ |
+| **Debian 13** | XFCE | ✅ | ✅ | ❔ | ✅ | ❔ |
+| **Debian 13** | KDE | ❔ | ✅ | ❔ | ✅ | ❔ |
+| **Ubuntu 24.04** | Cinnamon | ✅ | ✅ | ❔ | ✅ | ❔ |
+| **Ubuntu 24.04** | GNOME | ✅ | ✅ | ❔ | ✅ | ❔ |
+| **Ubuntu 24.04** | XFCE | ✅ | ✅ | ❔ | ✅ | ❔ |
+| **Ubuntu 24.04** | KDE | ❔ | ✅ | ❔ | ✅ | ❔ |
+| **Ubuntu 25.04** | Cinnamon | ✅ | ✅ | ❔ | ✅ | ❔ |
+| **Ubuntu 25.04** | GNOME | ✅ | ✅ | ❔ | ✅ | ❔ |
+| **Ubuntu 25.04** | XFCE | ✅ | ✅ | ❔ | ✅ | ❔ |
 | **Ubuntu 25.04** | KDE | ❔ | ✅ | ❔ | ✅ | ❔ |
-| **PopOS 24** | GNOME | ❔ | ❔ | ❔ | ❔ | ❔ |
-| **Linux Mint** | Mate | ❔ | ❔ | ❔ | ❔ | ❔ |
+| **PopOS 24** | GNOME | ❔ | ✅ | ❔ | ✅ | ❔ |
+| **Linux Mint** | Mate | ❔ | ✅ | ❔ | ✅ | ❔ |
 | **LMDE 7** | Cinnamon | ❔ | ✅ | ❔ | ✅ | ❔ |
+| **CachyOS** | GNOME | ❔ | ❔| ❔ | ❔| ❔ |
 | **SteamOS** | Gamescope | ❔ | ✅ | ❔ | ✅ | ❌ |
 
 **Legende:** ✅ erfolgreich getestet | ❔ ungetestet | ❌ fehlerhaft/nicht unterstützt
