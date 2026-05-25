@@ -1,0 +1,10 @@
+Package: ultimate-debian-updater
+Version: 2.8.0
+Section: utils
+Priority: optional
+Architecture: all
+Depends: curl, pciutils, lsb-release, p7zip-full, ncurses-bin, libnotify-bin, fwupd, mesa-utils, vulkan-tools, pipx
+Maintainer: DerLinke <https://github.com/DerLinke>
+Description: Ein intelligentes All-in-one Update-Skript für Debian-basierte Systeme.
+ Automatisierte Updates für APT, Flatpak, Snap, GE-Proton und Gaming-Tools
+ mit intelligenter Hardware-Erkennung und Desktop-Optimierung.

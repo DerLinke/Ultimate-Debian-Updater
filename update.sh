@@ -1,6 +1,6 @@
 #!/bin/bash
 # ==============================================================================
-# 🚀 Ultimate Debian Updater v2.8.0-BETA (Gamer Edition)
+# 🚀 Ultimate Debian Updater v2.8.0 (Gamer Edition)
 # ------------------------------------------------------------------------------
 # Ein intelligentes All-in-one Update-Skript für Debian-basierte Systeme.
 # Fokus: System-Stabilität, Gaming-Performance und Desktop-Spezifika.
@@ -55,11 +55,81 @@ if [ ${#MISSING_BASIS[@]} -gt 0 ]; then
 fi
 
 # --- FARBEN & STILE ---
+C_RED=$'\e[38;2;255;0;0m'
+C_MAGENTA=$'\e[38;2;215;0;70m'
+C_PINK=$'\e[38;2;175;0;130m'
+C_PURP1=$'\e[38;2;120;0;180m'
+C_PURP2=$'\e[38;2;90;0;210m'
+C_PURP3=$'\e[38;2;60;0;230m'
+C_PURP4=$'\e[38;2;30;0;245m'
+C_GRAD1=$'\e[38;2;100;0;200m'
+C_GRAD2=$'\e[38;2;70;0;220m'
+C_GRAD3=$'\e[38;2;40;0;240m'
+C_GRAD4=$'\e[38;2;0;0;255m'
+C_BLUE=$'\e[38;2;0;0;255m'
+RESET=$'\e[0m'
+
 if [[ -n "$FORCE_COLOR" ]] || (check_cmd tput && [ $(tput colors 2>/dev/null || echo 0) -ge 8 ]); then
     BOLD=$(tput bold); NC=$(tput sgr0); RED=$(tput setaf 1); GREEN=$(tput setaf 2)
     YELLOW=$(tput setaf 3); BLUE=$(tput setaf 4); PURPLE=$(tput setaf 5); CYAN=$(tput setaf 6)
 fi
 : "${BOLD:=}"; : "${NC:=}"; : "${RED:=}"; : "${GREEN:=}"; : "${YELLOW:=}"; : "${BLUE:=}"; : "${PURPLE:=}"; : "${CYAN:=}"
+
+# --- SELF-UPDATE LOGIK ---
+check_self_update() {
+    if [ -d ".git" ] && check_cmd git; then
+        echo -e "\n${BOLD}${CYAN}🔄 GIT SELF-UPDATE CHECK${NC}"
+        git fetch origin main >/dev/null 2>&1
+        LOCAL=$(git rev-parse HEAD)
+        REMOTE=$(git rev-parse origin/main)
+        if [ "$LOCAL" != "$REMOTE" ]; then
+            echo -e "${BOLD}${YELLOW}✨ Eine neue Version auf GitHub ist verfügbar!${NC}"
+            read -p "Soll das Projekt jetzt aktualisiert (git pull) werden? [j/n]: " pull_choice
+            if [[ "$pull_choice" =~ ^([jJ][aA]|[jJ])$ ]]; then
+                if git pull origin main; then
+                    echo -e "${GREEN}✓ Projekt aktualisiert. Bitte starte das Skript neu.${NC}"
+                    exit 0
+                else
+                    echo -e "${RED}Fehler beim Git Update. Bitte manuell prüfen.${NC}"
+                fi
+            fi
+        fi
+    elif check_cmd curl; then
+        REMOTE_VERSION=$(curl -s --connect-timeout 2 "$RAW_URL" | grep -m1 "^VERSION=" | cut -d'"' -f2)
+        if [ -n "$REMOTE_VERSION" ] && [ "$REMOTE_VERSION" != "$VERSION" ]; then
+            echo -e "\n${BOLD}${YELLOW}✨ EINE NEUE VERSION IST VERFÜGBAR ($REMOTE_VERSION)!${NC}"
+            read -p "Möchtest du das Skript jetzt automatisch aktualisieren? [j/n]: " update_choice
+            if [[ "$update_choice" =~ ^([jJ][aA]|[jJ])$ ]]; then
+                if curl -s "$RAW_URL" -o "$0"; then
+                    echo -e "${GREEN}✓ Skript wurde aktualisiert. Bitte starte es neu.${NC}"
+                    exit 0
+                else
+                    echo -e "${RED}Fehler beim Herunterladen des Updates.${NC}"
+                fi
+            fi
+        fi
+    fi
+}
+
+# --- ALIAS LOGIK ---
+setup_alias() {
+    if [[ "$ENABLE_ALIAS_CHECK" == "true" ]]; then
+        local current_script_path=$(readlink -f "$0")
+        if ! grep -q "alias update=" ~/.bashrc; then
+            echo -e "\n${BOLD}${CYAN}⌨️  SCHNELLSTART-OPTIMIERUNG${NC}"
+            echo -e "Möchtest du den Alias '${BOLD}update${NC}' in deiner .bashrc anlegen?"
+            echo -e "Dadurch kannst du dieses Skript einfach mit ${BOLD}update${NC} starten."
+            echo -n "Drücke [ENTER] zum Bestätigen (Überspringen in 3 Sek...): "
+            if read -t 3; then
+                echo "alias update='$current_script_path'" >> ~/.bashrc
+                echo -e "\n${GREEN}✓ Alias 'update' wurde zu ~/.bashrc hinzugefügt!${NC}"
+                echo -e "${YELLOW}Info: Wirksam nach Neustart des Terminals.${NC}"
+            else
+                echo -e "\n${BLUE}ℹ️  Übersprungen.${NC}"
+            fi
+        fi
+    fi
+}
 
 # --- HARDWARE DETECTION ---
 GPU_INFO=$(lspci 2>/dev/null | grep -iE "vga|3d")
@@ -108,8 +178,11 @@ esac
 
 # --- HEADER ---
 clear
-echo -e "${BLUE}====================================================${NC}"
-echo -e "${BOLD}${CYAN}          🚀 $TITLE v$VERSION 🚀          ${NC}"
+echo -e "            ${C_PINK}██${RESET}            ${C_GRAD1}█${C_GRAD2}█${C_GRAD3}█${C_GRAD4}█${RESET}"
+echo -e "      ${C_MAGENTA}██${RESET}                        ${C_BLUE}██${RESET}"
+echo -e "${C_RED}██${RESET}                  ${C_PURP1}█${C_PURP2}█${C_PURP3}█${C_PURP4}█${RESET} ${BOLD}${CYAN}${TITLE} v${VERSION}${NC}"
+echo -e "      ${C_MAGENTA}██${RESET}                        ${C_BLUE}██${RESET}"
+echo -e "            ${C_PINK}██${RESET}            ${C_GRAD1}█${C_GRAD2}█${C_GRAD3}█${C_GRAD4}█${RESET}"
 echo -e "${YELLOW}           Desktop: $DE_LABEL | GPU: $([ "$IS_NVIDIA" = true ] && echo "NVIDIA" || ([ "$IS_AMD" = true ] && echo "AMD" || echo "Intel/Andere"))${NC}"
 echo -e "${BLUE}====================================================${NC}"
 
@@ -124,6 +197,10 @@ fix_system_paths() {
         fi
     done
 }
+
+# --- INITIALISIERUNG VON ALIAS & UPDATE ---
+check_self_update
+setup_alias
 
 # --- DIAGNOSE ---
 if [[ "$RUN_GAMING" == "true" ]]; then
@@ -294,15 +371,47 @@ if [[ "$RUN_GAMING" == "true" ]]; then
             SKIPPED+=("MangoHud (Aktuell: $INSTALLED_MANGO)")
         fi
     fi
+
+    # GOverlay Source Check (für manuell installierte Binary in /usr/local/bin)
+    if check_cmd goverlay && [ -f /usr/local/bin/goverlay ]; then
+        LATEST_GOVERLAY=$(curl -s https://api.github.com/repos/benjamimgois/goverlay/releases/latest | grep tag_name | cut -d'"' -f4)
+        INSTALLED_GOVERLAY=$(strings /usr/local/bin/goverlay 2>/dev/null | grep -E "^1\.[0-9]+\.[0-9]+$" | head -n 1)
+        
+        if [[ "$LATEST_GOVERLAY" != "" ]] && [[ "$LATEST_GOVERLAY" != "$INSTALLED_GOVERLAY" ]]; then
+            echo -e "  ${YELLOW}→ GOverlay Update verfügbar ($LATEST_GOVERLAY). Lade herunter...${NC}"
+            DL_URL="https://github.com/benjamimgois/goverlay/releases/download/${LATEST_GOVERLAY}/goverlay_${LATEST_GOVERLAY//./_}.tar.xz"
+            
+            # Im Hintergrund laden und ersetzen
+            (
+                cd /tmp || exit 1
+                if wget -q "$DL_URL" -O goverlay_update.tar.xz; then
+                    tar -xf goverlay_update.tar.xz
+                    if [ -f "goverlay" ]; then
+                        sudo mv goverlay /usr/local/bin/goverlay
+                        sudo chmod +x /usr/local/bin/goverlay
+                    fi
+                fi
+                rm -f goverlay_update.tar.xz
+            )
+            
+            # Direkt markieren, da wir von Erfolg ausgehen
+            if [ -f /usr/local/bin/goverlay ]; then
+                UPDATED+=("GOverlay ($LATEST_GOVERLAY)")
+            else
+                FAILED+=("GOverlay Update fehlgeschlagen")
+            fi
+        else
+            SKIPPED+=("GOverlay (Aktuell: ${INSTALLED_GOVERLAY:-Unbekannt})")
+        fi
+    fi
 fi
 
-# 10. Reinigung
+# --- ABSCHLUSS ---
 echo -e "\n${BOLD}${PURPLE}🧹 REINIGUNG${NC}"
 sudo journalctl --vacuum-time="${CLEANUP_LOG_DAYS}" >/dev/null 2>&1
 rm -rf ~/.cache/thumbnails/*
 echo -e "  ${GREEN}✓ Reinigung abgeschlossen.${NC}"
 
-# --- ZUSAMMENFASSUNG ---
 echo -e "\n\n${BOLD}${BLUE}====================================================${NC}"
 echo -e "${BOLD}${CYAN}              ABSCHLUSS-BERICHT                    ${NC}"
 echo -e "${BOLD}${BLUE}====================================================${NC}"
@@ -310,5 +419,5 @@ for item in "${UPDATED[@]}"; do echo -e "  ✅ $item"; done
 for item in "${SKIPPED[@]}"; do echo -e "  ℹ️  $item"; done
 [ ${#FAILED[@]} -gt 0 ] && (echo -e "\n${BOLD}${RED}⚠️  FEHLER:${NC}"; for item in "${FAILED[@]}"; do echo -e "  ❌ $item"; done)
 
-echo -e "\n"; read -p "Update beendet. Neustart erforderlich? (j/n): " r
-[[ "$r" == "j" ]] && sudo reboot
+echo -e "\n"; read -p "Update beendet. Neustart erforderlich? [j/n]: " r
+[[ "$r" =~ ^([jJ][aA]|[jJ])$ ]] && sudo reboot
