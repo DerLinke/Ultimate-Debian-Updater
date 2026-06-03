@@ -1,17 +1,19 @@
-# 🚀 Ultimate Debian Updater v2.8.0
+# 🚀 Ultimate Debian Updater v2.8.2
 
 Ein intelligentes All-in-one Update-Skript für Debian-basierte Systeme (Debian, Mint, Ubuntu), das alle gängigen Paketmanager und Gaming-Tools in einem einzigen Befehl vereint.
 
-## ✨ Features (v2.8.0)
+## ✨ Features (v2.8.2)
 
 - **Parameter-Steuerung**: `--full`, `--system`, `--game` für gezielte Updates.
 - **Desktop-Optimierung**: Spezifische Unterstützung für Cinnamon, GNOME, XFCE, KDE (pkcon), Mate und SteamOS (Gamescope).
 - **Gamer-Mode (Intelligent)**: 
     - Automatische Diagnose (32-Bit Libs, GPU-Treiber).
-    - GE-Proton Update-Check via ProtonUp.
+    - **Verbessert:** Explizite Proton-GE Diagnose & Update-Check mit Versionshinweisen.
     - MangoHud (Source-Check), GOverlay, vkBasalt & Protontricks Support.
 - **Hardware-Check**: Erkennt NVIDIA (inkl. Treiberversion), AMD (Mesa) und Intel.
 - **Auto-Installation**: Erkennt fehlende Tools und bietet die Installation (APT/Pipx) direkt an.
+- **Transparenz**: Alle relevanten Gaming-Tools erscheinen nun im Abschlussbericht.
+- **Flexibilität**: Präzise Distribution-Erkennung für personalisierte Wartungsmeldungen.
 
 ## 📊 Kompatibilitätsmatrix
 Das Skript wurde auf folgenden Konfigurationen erfolgreich getestet:
@@ -62,7 +64,7 @@ update --help   # Zeigt alle Parameter an
 ### Methode 1: .deb Paket (Empfohlen)
 Lade die aktuellste `.deb` Datei aus den [Releases](https://github.com/DerLinke/Ultimate-Debian-Updater/releases) herunter und installiere sie:
 ```bash
-sudo apt install ./ultimate-debian-updater_2.8.0_all.deb
+sudo apt install ./ultimate-debian-updater_2.8.1_all.deb
 ```
 *Vorteil: Automatisches Handling der Abhängigkeiten und der Befehl `update` ist systemweit verfügbar.*
 
@@ -93,4 +95,11 @@ chmod +x update.sh
       <text x="10" y="100" fill="url(#glitch-grad)" xml:space="preserve">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;██&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;████</text>
     </g>
   </svg>
+</p>
+
+---
+<p align="center">
+  <img src="https://derlinke.github.io/logo.svg" width="300" alt="Logo"><br>
+  <strong>DerLinke Software Zentrale</strong><br>
+  <a href="https://derlinke.github.io/">Offizielle Webseite</a> | <a href="https://github.com/DerLinke/Ultimate-Debian-Updater">GitHub Repository</a>
 </p>

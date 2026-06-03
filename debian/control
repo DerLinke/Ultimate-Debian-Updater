@@ -1,5 +1,5 @@
 Package: ultimate-debian-updater
-Version: 2.8.0
+Version: 2.8.2
 Section: utils
 Priority: optional
 Architecture: all

@@ -406,11 +406,22 @@ if [[ "$RUN_GAMING" == "true" ]]; then
     fi
 fi
 
+show_footer() {
+    echo -e "\n${BLUE}----------------------------------------------------${NC}"
+    echo -e "  ${BOLD}${SCRIPTNAME} v${VERSION}${NC}"
+    echo -e "  ${YELLOW}Web:${NC} ${BLUE}https://derlinke.github.io/${NC}"
+    echo -e "  ${YELLOW}Git:${NC} ${BLUE}https://github.com/DerLinke/Ultimate-Debian-Updater${NC}"
+    echo -e "  ${C_RED}██${C_PINK}██${C_BLUE}██${NC}"
+    echo -e "${BLUE}====================================================${NC}\n"
+}
+
 # --- ABSCHLUSS ---
 echo -e "\n${BOLD}${PURPLE}🧹 REINIGUNG${NC}"
 sudo journalctl --vacuum-time="${CLEANUP_LOG_DAYS}" >/dev/null 2>&1
 rm -rf ~/.cache/thumbnails/*
 echo -e "  ${GREEN}✓ Reinigung abgeschlossen.${NC}"
+
+show_footer
 
 echo -e "\n\n${BOLD}${BLUE}====================================================${NC}"
 echo -e "${BOLD}${CYAN}              ABSCHLUSS-BERICHT                    ${NC}"
