@@ -1,6 +1,6 @@
 #!/bin/bash
 # ==============================================================================
-# 🚀 Ultimate Debian Updater v2.8.0 (Gamer Edition)
+# 🚀 Ultimate Debian Updater v2.8.2 (Gamer Edition)
 # ------------------------------------------------------------------------------
 # Ein intelligentes All-in-one Update-Skript für Debian-basierte Systeme.
 # Fokus: System-Stabilität, Gaming-Performance und Desktop-Spezifika.
@@ -9,10 +9,16 @@
 # Copyright (c) 2026 DerLinke
 # ==============================================================================
 
+# --- INITIALISIERUNG ---
+SCRIPTNAME="Ultimate Debian Updater"
+VERSION="2.8.2"
+RAW_URL="https://raw.githubusercontent.com/DerLinke/Ultimate-Debian-Updater/main/update.sh"
+UPDATED=(); FAILED=(); SKIPPED=()
+export PATH="$HOME/.local/bin:/usr/local/bin:$PATH"
+
 # --- KONFIGURATION (VORGABEN) ---
 : "${DEFAULT_MODE:=full}"
 : "${STEAM_GE_PATH:=$HOME/.local/share/Steam/compatibilitytools.d/}"
-: "${TITLE:=Ultimate Debian Updater}"
 : "${CLEANUP_LOG_DAYS:=3d}"
 : "${ENABLE_ALIAS_CHECK:=true}"
 : "${DEBGET_TOKEN:=}"
@@ -22,12 +28,6 @@
 : "${CHECK_32BIT_LIBS:=true}"
 : "${OPTISCALER_PATH:=$HOME/.local/share/optiscaler}"
 : "${MANAGE_VULKAN_LAYERS:=true}"
-
-# --- INITIALISIERUNG ---
-VERSION="2.8.0"
-RAW_URL="https://raw.githubusercontent.com/DerLinke/Ultimate-Debian-Updater/main/update.sh"
-UPDATED=(); FAILED=(); SKIPPED=()
-export PATH="$HOME/.local/bin:/usr/local/bin:$PATH"
 
 check_cmd() { 
     command -v "$1" >/dev/null 2>&1 || [ -f "$HOME/.local/bin/$1" ] || [ -f "/usr/local/bin/$1" ]
@@ -152,7 +152,7 @@ DE_LABEL="Unbekannt"
 # --- HILFE & PARAMETER ---
 show_help() {
     echo -e "${BLUE}====================================================${NC}"
-    echo -e "${BOLD}${CYAN}          $TITLE v$VERSION Hilfe          ${NC}"
+    echo -e "${BOLD}${CYAN}          $SCRIPTNAME v$VERSION Hilfe          ${NC}"
     echo -e "${BLUE}====================================================${NC}"
     echo -e "\n${BOLD}NUTZUNG:${NC} update [PARAMETER]"
     echo -e "\n${BOLD}PARAMETER:${NC}"
@@ -180,7 +180,7 @@ esac
 clear
 echo -e "            ${C_PINK}██${RESET}            ${C_GRAD1}█${C_GRAD2}█${C_GRAD3}█${C_GRAD4}█${RESET}"
 echo -e "      ${C_MAGENTA}██${RESET}                        ${C_BLUE}██${RESET}"
-echo -e "${C_RED}██${RESET}                  ${C_PURP1}█${C_PURP2}█${C_PURP3}█${C_PURP4}█${RESET} ${BOLD}${CYAN}${TITLE} v${VERSION}${NC}"
+echo -e "${C_RED}██${RESET}                  ${C_PURP1}█${C_PURP2}█${C_PURP3}█${C_PURP4}█${RESET} ${BOLD}${CYAN}${SCRIPTNAME} v${VERSION}${NC}"
 echo -e "      ${C_MAGENTA}██${RESET}                        ${C_BLUE}██${RESET}"
 echo -e "            ${C_PINK}██${RESET}            ${C_GRAD1}█${C_GRAD2}█${C_GRAD3}█${C_GRAD4}█${RESET}"
 echo -e "${YELLOW}           Desktop: $DE_LABEL | GPU: $([ "$IS_NVIDIA" = true ] && echo "NVIDIA" || ([ "$IS_AMD" = true ] && echo "AMD" || echo "Intel/Andere"))${NC}"
