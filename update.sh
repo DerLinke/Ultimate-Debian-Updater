@@ -11,7 +11,7 @@
 
 # --- INITIALISIERUNG ---
 SCRIPTNAME="Ultimate Debian Updater"
-VERSION="2.8.3"
+VERSION="2.8.4"
 RAW_URL="https://raw.githubusercontent.com/DerLinke/Ultimate-Debian-Updater/main/update.sh"
 UPDATED=(); FAILED=(); SKIPPED=()
 export PATH="$HOME/.local/bin:/usr/local/bin:$PATH"
@@ -338,7 +338,15 @@ if [[ "$RUN_SYSTEM" == "true" ]]; then
     esac
 
     # 3. Standard-Paketmanager
-    check_cmd extrepo && (echo -e "\n${BOLD}${PURPLE}📂 EXTREPO${NC}"; sudo extrepo update && UPDATED+=("Extrepo"))
+    if check_cmd extrepo; then
+        echo -e "\n${BOLD}${PURPLE}📂 EXTREPO${NC}"
+        if sudo timeout 15s extrepo update; then
+            UPDATED+=("Extrepo")
+        else
+            echo -e "  ${RED}⏳ Timeout: Übersprungen.${NC}"
+            SKIPPED+=("Extrepo (Timeout wg. IPv6)")
+        fi
+    fi
     if check_cmd apt; then
         echo -e "\n${BOLD}${PURPLE}📂 APT SYSTEM${NC}"
         sudo apt update && sudo apt full-upgrade -y && (sudo apt autoremove -y >/dev/null 2>&1; UPDATED+=("APT System"))
@@ -346,8 +354,8 @@ if [[ "$RUN_SYSTEM" == "true" ]]; then
     check_cmd flatpak && (echo -e "\n${BOLD}${PURPLE}📂 FLATPAK${NC}"; flatpak update -y --user; sudo flatpak update -y; UPDATED+=("Flatpak"))
     check_cmd snap && (echo -e "\n${BOLD}${PURPLE}📂 SNAP${NC}"; sudo snap refresh && UPDATED+=("Snap"))
     check_cmd deb-get && (echo -e "\n${BOLD}${PURPLE}📂 DEB-GET${NC}"; sudo -E deb-get update && sudo -E deb-get upgrade -y && UPDATED+=("deb-get"))
-    check_cmd npm && (echo -e "\n${BOLD}${PURPLE}📂 NPM${NC}"; sudo npm update -g && UPDATED+=("NPM Global"))
-    check_cmd pipx && (echo -e "\n${BOLD}${PURPLE}📂 PIPX${NC}"; pipx upgrade-all && UPDATED+=("Pipx Apps"))
+    check_cmd npm && (echo -e "\n${BOLD}${PURPLE}📂 NPM${NC}"; sudo npm update -g --no-fund --loglevel=error && UPDATED+=("NPM Global"))
+    check_cmd pipx && (echo -e "\n${BOLD}${PURPLE}📂 PIPX${NC}"; echo -e "  ${YELLOW}ℹ️ Dies kann einige Minuten dauern, da virtuelle Umgebungen neu gebaut werden...${NC}"; pipx upgrade-all && UPDATED+=("Pipx Apps"))
 fi
 
 if [[ "$RUN_GAMING" == "true" ]]; then
